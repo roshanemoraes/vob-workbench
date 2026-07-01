@@ -30,7 +30,19 @@ Development seed users are enabled by default:
 Auth endpoints:
 
 - `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
 - `GET /api/auth/me`
+
+The login and refresh endpoints return an access token plus a rotating refresh token. The refresh token is stored hashed in MongoDB and is revoked when it is used to issue a replacement token.
+
+Password policy defaults:
+
+- minimum length: `8`
+- requires at least one letter
+- requires at least one digit
+
+Planned admin user-management endpoints will require the `USER_MANAGE` permission.
 
 Swagger UI:
 
