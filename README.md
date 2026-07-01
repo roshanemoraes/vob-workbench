@@ -44,6 +44,16 @@ Password policy defaults:
 
 Planned admin user-management endpoints will require the `USER_MANAGE` permission.
 
+## Patient Intake
+
+Patient intake endpoints require a JWT access token.
+
+- `POST /api/patients` requires `PATIENT_CREATE`
+- `GET /api/patients` requires `PATIENT_VIEW`
+- `GET /api/patients/{id}` requires `PATIENT_VIEW`
+
+The patient list uses cursor-based pagination. The API returns `nextCursor`; pass it back as the `cursor` query parameter to fetch the next page.
+
 Swagger UI:
 
 ```text
