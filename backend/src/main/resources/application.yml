@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: vob-workbench-backend
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/vob_workbench}
+
+server:
+  port: ${BACKEND_PORT:8080}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+vob:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-this-development-secret-to-a-long-random-value}
+      expires-minutes: ${JWT_EXPIRES_MINUTES:120}
+  dev-seed:
+    enabled: ${DEV_SEED_ENABLED:true}
