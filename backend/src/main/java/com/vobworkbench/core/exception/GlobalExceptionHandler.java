@@ -1,12 +1,14 @@
 package com.vobworkbench.core.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -44,10 +46,28 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Request body is missing or malformed JSON", request);
     }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException exception, HttpServletRequest request) {
+        log.warn("Request parameter validation failed for path={}: {}", request.getRequestURI(), exception.getMessage());
+        return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
         log.warn("Bad request for path={}: {}", request.getRequestURI(), exception.getMessage());
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    ResponseEntity<ApiError> handleResourceNotFound(ResourceNotFoundException exception, HttpServletRequest request) {
+        log.warn("Resource not found for path={}: {}", request.getRequestURI(), exception.getMessage());
+        return build(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler({ConflictException.class, DuplicateKeyException.class})
+    ResponseEntity<ApiError> handleConflict(Exception exception, HttpServletRequest request) {
+        log.warn("Conflict for path={}: {}", request.getRequestURI(), exception.getMessage());
+        return build(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)

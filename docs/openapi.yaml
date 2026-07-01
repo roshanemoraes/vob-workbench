@@ -1,14 +1,16 @@
 openapi: 3.0.3
 info:
-  title: VOB Workbench Auth API
+  title: VOB Workbench API
   version: 0.0.1
-  description: Authentication endpoints for the VOB Workbench backend.
+  description: Authentication and patient intake API for the VOB Workbench backend.
 servers:
   - url: http://localhost:8080
     description: Local backend
 tags:
   - name: Auth
-    description: Login and current-user endpoints.
+    description: Login, token refresh, logout, and current-user endpoints.
+  - name: Patients
+    description: Front desk patient intake and patient lookup.
   - name: Admin Users
     description: Planned admin-only user-management endpoints.
 paths:
@@ -16,7 +18,7 @@ paths:
     post:
       tags:
         - Auth
-      summary: Log in and receive a JWT access token.
+      summary: Log in and receive a JWT access token and refresh token.
       operationId: login
       security: []
       requestBody:
@@ -49,11 +51,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Request validation failed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/BadRequest'
         '401':
           description: Invalid username or password.
           content:
@@ -81,11 +79,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
-          description: Request validation failed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/BadRequest'
         '401':
           description: Missing, invalid, expired, or revoked refresh token.
           content:
@@ -109,11 +103,7 @@ paths:
         '204':
           description: Refresh token revoked if it existed.
         '400':
-          description: Request validation failed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/BadRequest'
   /api/auth/me:
     get:
       tags:
@@ -130,7 +120,123 @@ paths:
               schema:
                 $ref: '#/components/schemas/CurrentUserResponse'
         '401':
-          description: Missing, invalid, or expired JWT.
+          $ref: '#/components/responses/Unauthorized'
+  /api/patients:
+    post:
+      tags:
+        - Patients
+      summary: Create a patient during front desk intake.
+      operationId: createPatient
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePatientRequest'
+            example:
+              mrn: MRN-10001
+              firstName: Jane
+              lastName: Doe
+              dateOfBirth: '1990-04-10'
+              gender: FEMALE
+              phone: '555-123-4567'
+      responses:
+        '201':
+          description: Patient created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks PATIENT_CREATE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Patient MRN already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    get:
+      tags:
+        - Patients
+      summary: List patients using cursor-based pagination.
+      operationId: listPatients
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque cursor returned from the previous page.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Number of records to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Patient page returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientPageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks PATIENT_VIEW.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/patients/{id}:
+    get:
+      tags:
+        - Patients
+      summary: Get a patient by id.
+      operationId: getPatientById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 6682df563cc7f568fbf16210
+      responses:
+        '200':
+          description: Patient returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PatientResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks PATIENT_VIEW.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Patient not found.
           content:
             application/json:
               schema:
@@ -154,11 +260,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/UserSummary'
         '401':
-          description: Missing or invalid JWT.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/Unauthorized'
         '403':
           description: Authenticated user lacks USER_MANAGE.
           content:
@@ -187,17 +289,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserSummary'
         '400':
-          description: Request validation failed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid JWT.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/Unauthorized'
         '403':
           description: Authenticated user lacks USER_MANAGE.
           content:
@@ -229,11 +323,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserSummary'
         '401':
-          description: Missing or invalid JWT.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/Unauthorized'
         '403':
           description: Authenticated user lacks USER_MANAGE.
           content:
@@ -265,11 +355,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserSummary'
         '401':
-          description: Missing or invalid JWT.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiError'
+          $ref: '#/components/responses/Unauthorized'
         '403':
           description: Authenticated user lacks USER_MANAGE.
           content:
@@ -290,6 +376,19 @@ components:
       schema:
         type: string
       example: 6682df563cc7f568fbf16210
+  responses:
+    BadRequest:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+    Unauthorized:
+      description: Missing or invalid JWT.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
   schemas:
     LoginRequest:
       type: object
@@ -346,6 +445,30 @@ components:
           type: string
           minLength: 1
           example: F7c-NyGWZ-TQ2mleUECJjUAliFGar-F5b1hFGw8TZOw
+    CurrentUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+    UserSummary:
+      type: object
+      required:
+        - id
+        - username
+        - role
+        - permissions
+      properties:
+        id:
+          type: string
+          example: 6682df563cc7f568fbf16210
+        username:
+          type: string
+          example: specialist
+        role:
+          $ref: '#/components/schemas/AppRole'
+        permissions:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Permission'
     CreateUserRequest:
       type: object
       required:
@@ -380,30 +503,99 @@ components:
         enabled:
           type: boolean
           example: true
-    CurrentUserResponse:
-      allOf:
-        - $ref: '#/components/schemas/UserSummary'
-    UserSummary:
+    CreatePatientRequest:
+      type: object
+      required:
+        - mrn
+        - firstName
+        - lastName
+        - dateOfBirth
+        - gender
+        - phone
+      properties:
+        mrn:
+          type: string
+          minLength: 1
+          example: MRN-10001
+        firstName:
+          type: string
+          minLength: 1
+          example: Jane
+        lastName:
+          type: string
+          minLength: 1
+          example: Doe
+        dateOfBirth:
+          type: string
+          format: date
+          example: '1990-04-10'
+        gender:
+          $ref: '#/components/schemas/Gender'
+        phone:
+          type: string
+          minLength: 1
+          example: '555-123-4567'
+    PatientResponse:
       type: object
       required:
         - id
-        - username
-        - role
-        - permissions
+        - mrn
+        - firstName
+        - lastName
+        - dateOfBirth
+        - gender
+        - phone
+        - createdByUserId
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: string
           example: 6682df563cc7f568fbf16210
-        username:
+        mrn:
           type: string
-          example: specialist
-        role:
-          $ref: '#/components/schemas/AppRole'
-        permissions:
+          example: MRN-10001
+        firstName:
+          type: string
+          example: Jane
+        lastName:
+          type: string
+          example: Doe
+        dateOfBirth:
+          type: string
+          format: date
+          example: '1990-04-10'
+        gender:
+          $ref: '#/components/schemas/Gender'
+        phone:
+          type: string
+          example: '555-123-4567'
+        createdByUserId:
+          type: string
+          example: 6682df563cc7f568fbf11111
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    PatientPageResponse:
+      type: object
+      required:
+        - items
+        - hasNext
+      properties:
+        items:
           type: array
-          uniqueItems: true
           items:
-            $ref: '#/components/schemas/Permission'
+            $ref: '#/components/schemas/PatientResponse'
+        nextCursor:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page. Built from createdAt and id, but clients should not parse it.
+        hasNext:
+          type: boolean
+          example: true
     AppRole:
       type: string
       enum:
@@ -426,6 +618,13 @@ components:
         - DASHBOARD_VIEW
         - AUDIT_VIEW
         - USER_MANAGE
+    Gender:
+      type: string
+      enum:
+        - MALE
+        - FEMALE
+        - OTHER
+        - UNKNOWN
     ApiError:
       type: object
       required:
@@ -440,13 +639,13 @@ components:
           format: date-time
         status:
           type: integer
-          example: 401
+          example: 400
         error:
           type: string
-          example: Unauthorized
+          example: Bad Request
         message:
           type: string
-          example: Invalid username or password
+          example: Request validation failed
         path:
           type: string
-          example: /api/auth/login
+          example: /api/patients
