@@ -1,0 +1,452 @@
+openapi: 3.0.3
+info:
+  title: VOB Workbench Auth API
+  version: 0.0.1
+  description: Authentication endpoints for the VOB Workbench backend.
+servers:
+  - url: http://localhost:8080
+    description: Local backend
+tags:
+  - name: Auth
+    description: Login and current-user endpoints.
+  - name: Admin Users
+    description: Planned admin-only user-management endpoints.
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Log in and receive a JWT access token.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              admin:
+                summary: Admin login
+                value:
+                  username: admin
+                  password: admin123
+              frontDesk:
+                summary: Front desk operator login
+                value:
+                  username: frontdesk
+                  password: frontdesk123
+              specialist:
+                summary: Specialist login
+                value:
+                  username: specialist
+                  password: specialist123
+      responses:
+        '200':
+          description: Login succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Invalid username or password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Rotate a refresh token and receive a new token pair.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Refresh succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Missing, invalid, expired, or revoked refresh token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Revoke a refresh token.
+      operationId: logout
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '204':
+          description: Refresh token revoked if it existed.
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Return the currently authenticated user.
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+        '401':
+          description: Missing, invalid, or expired JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/admin/users:
+    get:
+      tags:
+        - Admin Users
+      summary: List users.
+      description: Planned endpoint. Requires USER_MANAGE permission.
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Users returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Missing or invalid JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Authenticated user lacks USER_MANAGE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      tags:
+        - Admin Users
+      summary: Create a user.
+      description: Planned endpoint. Requires USER_MANAGE permission.
+      operationId: createUser
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '400':
+          description: Request validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Missing or invalid JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Authenticated user lacks USER_MANAGE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/admin/users/{id}/role:
+    patch:
+      tags:
+        - Admin Users
+      summary: Change a user's role.
+      description: Planned endpoint. Requires USER_MANAGE permission.
+      operationId: updateUserRole
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRoleRequest'
+      responses:
+        '200':
+          description: User role updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Missing or invalid JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Authenticated user lacks USER_MANAGE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/admin/users/{id}/status:
+    patch:
+      tags:
+        - Admin Users
+      summary: Enable or disable a user.
+      description: Planned endpoint. Requires USER_MANAGE permission.
+      operationId: updateUserStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserStatusRequest'
+      responses:
+        '200':
+          description: User status updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Missing or invalid JWT.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '403':
+          description: Authenticated user lacks USER_MANAGE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    UserId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      example: 6682df563cc7f568fbf16210
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          example: specialist
+        password:
+          type: string
+          minLength: 1
+          format: password
+          example: specialist123
+    AuthResponse:
+      type: object
+      required:
+        - tokenType
+        - accessToken
+        - refreshToken
+        - expiresAt
+        - refreshExpiresAt
+        - user
+      properties:
+        tokenType:
+          type: string
+          example: Bearer
+        accessToken:
+          type: string
+          description: JWT access token to send as an Authorization Bearer token.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.signature
+        refreshToken:
+          type: string
+          description: Opaque refresh token. Store securely and exchange only with the refresh endpoint.
+          example: F7c-NyGWZ-TQ2mleUECJjUAliFGar-F5b1hFGw8TZOw
+        expiresAt:
+          type: string
+          format: date-time
+          example: '2026-06-30T14:30:00Z'
+        refreshExpiresAt:
+          type: string
+          format: date-time
+          example: '2026-07-07T14:30:00Z'
+        user:
+          $ref: '#/components/schemas/UserSummary'
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          example: F7c-NyGWZ-TQ2mleUECJjUAliFGar-F5b1hFGw8TZOw
+    CreateUserRequest:
+      type: object
+      required:
+        - username
+        - password
+        - role
+      properties:
+        username:
+          type: string
+          minLength: 1
+          example: new.specialist
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: Must satisfy the configured password policy.
+          example: Specialist123
+        role:
+          $ref: '#/components/schemas/AppRole'
+    UpdateUserRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          $ref: '#/components/schemas/AppRole'
+    UpdateUserStatusRequest:
+      type: object
+      required:
+        - enabled
+      properties:
+        enabled:
+          type: boolean
+          example: true
+    CurrentUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserSummary'
+    UserSummary:
+      type: object
+      required:
+        - id
+        - username
+        - role
+        - permissions
+      properties:
+        id:
+          type: string
+          example: 6682df563cc7f568fbf16210
+        username:
+          type: string
+          example: specialist
+        role:
+          $ref: '#/components/schemas/AppRole'
+        permissions:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/Permission'
+    AppRole:
+      type: string
+      enum:
+        - ADMIN
+        - FRONT_DESK_OPERATOR
+        - SPECIALIST
+    Permission:
+      type: string
+      enum:
+        - PATIENT_CREATE
+        - PATIENT_VIEW
+        - VOB_CREATE
+        - VOB_VIEW_OWN
+        - VOB_QUEUE_VIEW
+        - VOB_CLAIM
+        - VOB_VERIFY_API
+        - VOB_VERIFY_MANUAL
+        - VOB_COMPLETE
+        - VOB_ASSIGN
+        - DASHBOARD_VIEW
+        - AUDIT_VIEW
+        - USER_MANAGE
+    ApiError:
+      type: object
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+        - path
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          example: 401
+        error:
+          type: string
+          example: Unauthorized
+        message:
+          type: string
+          example: Invalid username or password
+        path:
+          type: string
+          example: /api/auth/login

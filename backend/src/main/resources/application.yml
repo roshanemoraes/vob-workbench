@@ -17,5 +17,11 @@ vob:
     jwt:
       secret: ${JWT_SECRET:change-this-development-secret-to-a-long-random-value}
       expires-minutes: ${JWT_EXPIRES_MINUTES:120}
+    refresh-token:
+      expires-days: ${REFRESH_TOKEN_EXPIRES_DAYS:7}
+    password:
+      min-length: ${PASSWORD_MIN_LENGTH:8}
+      require-letter: ${PASSWORD_REQUIRE_LETTER:true}
+      require-digit: ${PASSWORD_REQUIRE_DIGIT:true}
   dev-seed:
     enabled: ${DEV_SEED_ENABLED:true}

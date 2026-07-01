@@ -13,10 +13,16 @@ import org.springframework.stereotype.Component;
 public class DevUserSeeder implements CommandLineRunner {
 
     private final PasswordEncoder passwordEncoder;
+    private final PasswordPolicyService passwordPolicyService;
     private final UserRepository userRepository;
 
-    public DevUserSeeder(PasswordEncoder passwordEncoder, UserRepository userRepository) {
+    public DevUserSeeder(
+            PasswordEncoder passwordEncoder,
+            PasswordPolicyService passwordPolicyService,
+            UserRepository userRepository
+    ) {
         this.passwordEncoder = passwordEncoder;
+        this.passwordPolicyService = passwordPolicyService;
         this.userRepository = userRepository;
     }
 
@@ -31,6 +37,8 @@ public class DevUserSeeder implements CommandLineRunner {
         if (userRepository.existsByUsername(username)) {
             return;
         }
+
+        passwordPolicyService.validate(password);
 
         AppUser user = new AppUser();
         user.setUsername(username);
