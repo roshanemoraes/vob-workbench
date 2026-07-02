@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.validation.FieldError;
@@ -68,6 +69,12 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> handleConflict(Exception exception, HttpServletRequest request) {
         log.warn("Conflict for path={}: {}", request.getRequestURI(), exception.getMessage());
         return build(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException exception, HttpServletRequest request) {
+        log.warn("Access denied for path={}: {}", request.getRequestURI(), exception.getMessage());
+        return build(HttpStatus.FORBIDDEN, exception.getMessage(), request);
     }
 
     @ExceptionHandler(Exception.class)
