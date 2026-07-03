@@ -60,9 +60,21 @@ VOB request endpoints require a JWT access token.
 
 - `POST /api/vob` requires `VOB_CREATE`
 - `GET /api/vob/{id}` requires `VOB_QUEUE_VIEW` or `VOB_VIEW_OWN`
-- `GET /api/vob/queue` requires `VOB_QUEUE_VIEW`
+- `GET /api/vob?status=QUEUED` requires `VOB_QUEUE_VIEW` or `VOB_VIEW_OWN`
+- `POST /api/vob/{id}/claim` requires `VOB_CLAIM`
+- `POST /api/vob/{id}/verify-api` requires `VOB_VERIFY_API`
+- `POST /api/vob/{id}/verify-manual` requires `VOB_VERIFY_MANUAL`
 
-New VOB requests are created with `QUEUED` status and no assigned specialist. The queue endpoint returns MongoDB-backed queued work using cursor-based pagination sorted by `createdAt ASC, _id ASC`.
+New VOB requests are created with `QUEUED` status and no assigned specialist. The VOB list endpoint supports status filtering with cursor-based pagination and `sortOrder=asc|desc`.
+
+VOB lifecycle:
+
+```text
+QUEUED -> IN_PROGRESS -> VERIFIED
+                     -> FAILED_TO_VERIFY
+```
+
+Specialists claim queued VOBs to move them into `IN_PROGRESS`. Verification can be completed through the mocked API flow or through manual verification, both of which populate the embedded `eligibilityResult`.
 
 Swagger UI:
 
