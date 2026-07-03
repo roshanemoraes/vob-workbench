@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.vobworkbench.core.security.SecurityExpressions;
 import com.vobworkbench.feature.user.service.UserPrincipal;
+import com.vobworkbench.feature.vob.dto.ManualVerificationRequestDTO;
 import com.vobworkbench.feature.vob.dto.VobQueueResponseDTO;
 import com.vobworkbench.feature.vob.dto.VobRequestDTO;
 import com.vobworkbench.feature.vob.dto.VobResponseDTO;
@@ -67,5 +68,33 @@ public class VobController {
             @AuthenticationPrincipal UserPrincipal principal) {
 
         return ResponseEntity.ok(vobService.getVobListByStatus(status, cursor, limit, sortOrder, principal));
+    }
+
+    @PostMapping("/{id}/claim")
+    @PreAuthorize(SecurityExpressions.VOB_CLAIM)
+    ResponseEntity<VobResponseDTO> claimForProcessing(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(vobService.claimForProcessing(id, principal));
+    }
+
+    @PostMapping("/{id}/verify-api")
+    @PreAuthorize(SecurityExpressions.VOB_VERIFY_API)
+    ResponseEntity<VobResponseDTO> verifyVobWithApi(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(vobService.verifyVobWithApi(id, principal));
+    }
+
+    @PostMapping("/{id}/verify-manual")
+    @PreAuthorize(SecurityExpressions.VOB_VERIFY_MANUAL)
+    ResponseEntity<VobResponseDTO> verifyVobManually(
+            @PathVariable String id,
+            @Valid @RequestBody ManualVerificationRequestDTO request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+
+        return ResponseEntity.ok(vobService.verifyVobManually(id, request, principal));
     }
 }
