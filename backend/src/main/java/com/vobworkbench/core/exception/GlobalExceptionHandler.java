@@ -71,6 +71,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    ResponseEntity<ApiError> handleServiceUnavailable(ServiceUnavailableException exception, HttpServletRequest request) {
+        log.warn("Service unavailable for path={}: {}", request.getRequestURI(), exception.getMessage());
+        return build(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException exception, HttpServletRequest request) {
         log.warn("Access denied for path={}: {}", request.getRequestURI(), exception.getMessage());
