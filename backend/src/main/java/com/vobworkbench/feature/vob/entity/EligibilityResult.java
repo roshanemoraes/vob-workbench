@@ -23,6 +23,10 @@ public class EligibilityResult {
 
     private String notes;
 
+    private String referenceNumber;
+
+    private String failureReason;
+
     private String verifiedByUserId;
 
     private Instant verifiedAt;
@@ -117,6 +121,26 @@ public class EligibilityResult {
     public void setNotes(String notes) {
 
         this.notes = notes;
+    }
+
+    public String getReferenceNumber() {
+
+        return referenceNumber;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+
+        this.referenceNumber = referenceNumber;
+    }
+
+    public String getFailureReason() {
+
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+
+        this.failureReason = failureReason;
     }
 
     public String getVerifiedByUserId() {

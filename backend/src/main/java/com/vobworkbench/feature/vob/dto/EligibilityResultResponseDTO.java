@@ -18,6 +18,8 @@ public record EligibilityResultResponseDTO(
         BigDecimal oopMax,
         BigDecimal oopMet,
         String notes,
+        String referenceNumber,
+        String failureReason,
         String verifiedByUserId,
         Instant verifiedAt,
         VerificationMethod verificationMethod) {
@@ -39,6 +41,8 @@ public record EligibilityResultResponseDTO(
                 eligibilityResult.getOopMax(),
                 eligibilityResult.getOopMet(),
                 eligibilityResult.getNotes(),
+                eligibilityResult.getReferenceNumber(),
+                eligibilityResult.getFailureReason(),
                 eligibilityResult.getVerifiedByUserId(),
                 eligibilityResult.getVerifiedAt(),
                 eligibilityResult.getVerificationMethod()
