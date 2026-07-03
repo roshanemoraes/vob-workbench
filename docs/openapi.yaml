@@ -11,6 +11,8 @@ tags:
     description: Login, token refresh, logout, and current-user endpoints.
   - name: Patients
     description: Front desk patient intake and patient lookup.
+  - name: VOB Requests
+    description: VOB request creation and queued worklist.
   - name: Admin Users
     description: Planned admin-only user-management endpoints.
 paths:
@@ -237,6 +239,300 @@ paths:
                 $ref: '#/components/schemas/ApiError'
         '404':
           description: Patient not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/vob:
+    get:
+      tags:
+        - VOB Requests
+      summary: List VOB requests by status using cursor-based pagination.
+      operationId: listVobsByStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: true
+          description: VOB status to filter by.
+          schema:
+            $ref: '#/components/schemas/VobStatus'
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque cursor returned from the previous page.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Number of VOB requests to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sortOrder
+          in: query
+          required: false
+          description: Sort direction for createdAt and id.
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+      responses:
+        '200':
+          description: VOB page returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VobQueuePageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks VOB_QUEUE_VIEW.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    post:
+      tags:
+        - VOB Requests
+      summary: Create a VOB request for an existing patient.
+      operationId: createVob
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VobRequestDTO'
+            example:
+              patientId: 6682df563cc7f568fbf16210
+              insurance:
+                payerName: Acme Health
+                memberId: MEM-12345
+                groupNumber: GRP-100
+                planType: PPO
+                relationshipToSubscriber: SELF
+                coverageStart: '2026-01-01'
+                coverageEnd: '2026-12-31'
+              dateOfService: '2026-07-10'
+              priority: ROUTINE
+      responses:
+        '201':
+          description: VOB request created and queued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VobResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks VOB_CREATE.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: Patient not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/vob/{id}:
+    get:
+      tags:
+        - VOB Requests
+      summary: Get a VOB request by id.
+      operationId: getVobById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 6682df563cc7f568fbf16220
+      responses:
+        '200':
+          description: VOB request returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VobResponseDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks access to this VOB request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: VOB request not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/vob/{id}/claim:
+    post:
+      tags:
+        - VOB Requests
+      summary: Claim a queued VOB for processing.
+      description: Atomically changes a VOB from QUEUED to IN_PROGRESS and assigns it to the current user.
+      operationId: claimVobForProcessing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 6682df563cc7f568fbf16220
+      responses:
+        '200':
+          description: VOB claimed and assigned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VobResponseDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Authenticated user lacks VOB_CLAIM.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: VOB request not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: VOB is not queued or was already claimed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/vob/{id}/verify-api:
+    post:
+      tags:
+        - VOB Requests
+      summary: Verify an in-progress VOB through the mocked eligibility API.
+      operationId: verifyVobUsingApi
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 6682df563cc7f568fbf16220
+      responses:
+        '200':
+          description: VOB verification completed by API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VobResponseDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User is not assigned to this VOB or lacks VOB_VERIFY_API.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: VOB request not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: VOB is not in IN_PROGRESS status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '503':
+          description: Eligibility API is unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+  /api/vob/{id}/verify-manual:
+    post:
+      tags:
+        - VOB Requests
+      summary: Verify an in-progress VOB manually.
+      operationId: verifyVobManually
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 6682df563cc7f568fbf16220
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManualVerificationRequestDTO'
+            example:
+              result: VERIFIED
+              coverageActive: true
+              networkStatus: IN_NETWORK
+              copay: 25.00
+              coinsurancePercent: 20.00
+              deductibleTotal: 1500.00
+              deductibleMet: 500.00
+              oopMax: 6000.00
+              oopMet: 1250.00
+              notes: Confirmed active coverage by payer portal.
+              referenceNumber: ABC-123
+      responses:
+        '200':
+          description: Manual verification completed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VobResponseDTO'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User is not assigned to this VOB or lacks VOB_VERIFY_MANUAL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '404':
+          description: VOB request not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: VOB is not in IN_PROGRESS status.
           content:
             application/json:
               schema:
@@ -596,6 +892,230 @@ components:
         hasNext:
           type: boolean
           example: true
+    VobRequestDTO:
+      type: object
+      required:
+        - patientId
+        - insurance
+        - dateOfService
+        - priority
+      properties:
+        patientId:
+          type: string
+          minLength: 1
+          example: 6682df563cc7f568fbf16210
+        insurance:
+          $ref: '#/components/schemas/InsurancePolicyRequest'
+        dateOfService:
+          type: string
+          format: date
+          example: '2026-07-10'
+        priority:
+          $ref: '#/components/schemas/VobPriority'
+    InsurancePolicyRequest:
+      type: object
+      required:
+        - payerName
+        - memberId
+        - relationshipToSubscriber
+      properties:
+        payerName:
+          type: string
+          minLength: 1
+          example: Acme Health
+        memberId:
+          type: string
+          minLength: 1
+          example: MEM-12345
+        groupNumber:
+          type: string
+          example: GRP-100
+        planType:
+          type: string
+          example: PPO
+        relationshipToSubscriber:
+          $ref: '#/components/schemas/RelationshipToSubscriber'
+        coverageStart:
+          type: string
+          format: date
+          example: '2026-01-01'
+        coverageEnd:
+          type: string
+          format: date
+          example: '2026-12-31'
+    InsurancePolicyResponse:
+      allOf:
+        - $ref: '#/components/schemas/InsurancePolicyRequest'
+    EligibilityResultResponse:
+      type: object
+      properties:
+        coverageActive:
+          type: boolean
+          nullable: true
+          example: true
+        networkStatus:
+          $ref: '#/components/schemas/NetworkStatus'
+        copay:
+          type: number
+          nullable: true
+          example: 25.00
+        coinsurancePercent:
+          type: number
+          nullable: true
+          example: 20.00
+        deductibleTotal:
+          type: number
+          nullable: true
+          example: 1500.00
+        deductibleMet:
+          type: number
+          nullable: true
+          example: 500.00
+        oopMax:
+          type: number
+          nullable: true
+          example: 6000.00
+        oopMet:
+          type: number
+          nullable: true
+          example: 1250.00
+        notes:
+          type: string
+          nullable: true
+          example: Coverage confirmed through payer portal.
+        referenceNumber:
+          type: string
+          nullable: true
+          example: ABC-123
+        failureReason:
+          type: string
+          nullable: true
+          example: Coverage could not be verified by API.
+        verifiedByUserId:
+          type: string
+          nullable: true
+          example: 6682df563cc7f568fbf22222
+        verifiedAt:
+          type: string
+          format: date-time
+          nullable: true
+        verificationMethod:
+          $ref: '#/components/schemas/VerificationMethod'
+    ManualVerificationRequestDTO:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          enum:
+            - VERIFIED
+            - FAILED_TO_VERIFY
+        coverageActive:
+          type: boolean
+          nullable: true
+          example: true
+        networkStatus:
+          $ref: '#/components/schemas/NetworkStatus'
+        copay:
+          type: number
+          nullable: true
+          example: 25.00
+        coinsurancePercent:
+          type: number
+          nullable: true
+          example: 20.00
+        deductibleTotal:
+          type: number
+          nullable: true
+          example: 1500.00
+        deductibleMet:
+          type: number
+          nullable: true
+          example: 500.00
+        oopMax:
+          type: number
+          nullable: true
+          example: 6000.00
+        oopMet:
+          type: number
+          nullable: true
+          example: 1250.00
+        notes:
+          type: string
+          nullable: true
+          example: Confirmed active coverage by payer portal.
+        referenceNumber:
+          type: string
+          nullable: true
+          example: ABC-123
+        failureReason:
+          type: string
+          nullable: true
+          example: Payer portal unavailable and phone verification failed.
+    VobResponseDTO:
+      type: object
+      required:
+        - id
+        - patientId
+        - insurance
+        - dateOfService
+        - priority
+        - status
+        - createdByUserId
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          example: 6682df563cc7f568fbf16220
+        patientId:
+          type: string
+          example: 6682df563cc7f568fbf16210
+        insurance:
+          $ref: '#/components/schemas/InsurancePolicyResponse'
+        dateOfService:
+          type: string
+          format: date
+          example: '2026-07-10'
+        priority:
+          $ref: '#/components/schemas/VobPriority'
+        status:
+          $ref: '#/components/schemas/VobStatus'
+        assignedToUserId:
+          type: string
+          nullable: true
+          example: null
+        eligibilityResult:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/EligibilityResultResponse'
+        createdByUserId:
+          type: string
+          example: 6682df563cc7f568fbf11111
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    VobQueuePageResponse:
+      type: object
+      required:
+        - items
+        - hasNext
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/VobResponseDTO'
+        nextCursor:
+          type: string
+          nullable: true
+          description: Opaque cursor for the next page. Built from createdAt and id, but clients should not parse it.
+        hasNext:
+          type: boolean
+          example: true
     AppRole:
       type: string
       enum:
@@ -625,6 +1145,36 @@ components:
         - FEMALE
         - OTHER
         - UNKNOWN
+    RelationshipToSubscriber:
+      type: string
+      enum:
+        - SELF
+        - SPOUSE
+        - CHILD
+        - OTHER
+    NetworkStatus:
+      type: string
+      enum:
+        - IN_NETWORK
+        - OUT_OF_NETWORK
+        - UNKNOWN
+    VerificationMethod:
+      type: string
+      enum:
+        - API
+        - MANUAL
+    VobPriority:
+      type: string
+      enum:
+        - ROUTINE
+        - URGENT
+    VobStatus:
+      type: string
+      enum:
+        - QUEUED
+        - IN_PROGRESS
+        - VERIFIED
+        - FAILED_TO_VERIFY
     ApiError:
       type: object
       required:

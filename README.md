@@ -54,6 +54,16 @@ Patient intake endpoints require a JWT access token.
 
 The patient list uses cursor-based pagination. The API returns `nextCursor`; pass it back as the `cursor` query parameter to fetch the next page.
 
+## VOB Requests
+
+VOB request endpoints require a JWT access token.
+
+- `POST /api/vob` requires `VOB_CREATE`
+- `GET /api/vob/{id}` requires `VOB_QUEUE_VIEW` or `VOB_VIEW_OWN`
+- `GET /api/vob/queue` requires `VOB_QUEUE_VIEW`
+
+New VOB requests are created with `QUEUED` status and no assigned specialist. The queue endpoint returns MongoDB-backed queued work using cursor-based pagination sorted by `createdAt ASC, _id ASC`.
+
 Swagger UI:
 
 ```text
