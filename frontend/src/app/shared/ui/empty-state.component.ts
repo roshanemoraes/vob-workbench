@@ -6,31 +6,13 @@ import { AppButtonComponent } from './app-button.component';
   standalone: true,
   imports: [AppButtonComponent],
   template: `
-    <div class="empty-state">
-      <h3 class="empty-state__title">{{ title }}</h3>
-      <p class="empty-state__message">{{ message }}</p>
+    <div class="rounded-xl border border-dashed border-black/10 bg-[#fafafa] px-4 py-10 text-center text-[#717182]">
+      <h3 class="mb-2 text-base font-medium text-[#030213]">{{ title }}</h3>
+      <p class="mb-4 text-sm">{{ message }}</p>
       @if (actionLabel) {
         <app-button variant="primary" (click)="action.emit()">{{ actionLabel }}</app-button>
       }
     </div>
-  `,
-  styles: `
-    .empty-state {
-      text-align: center;
-      padding: var(--space-6) var(--space-4);
-      color: var(--color-text-muted);
-    }
-
-    .empty-state__title {
-      font-size: 16px;
-      color: var(--color-text);
-      margin-bottom: var(--space-2);
-    }
-
-    .empty-state__message {
-      margin: 0 0 var(--space-4);
-      font-size: 14px;
-    }
   `
 })
 export class EmptyStateComponent {

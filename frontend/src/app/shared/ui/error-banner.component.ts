@@ -6,31 +6,12 @@ import { AppButtonComponent } from './app-button.component';
   standalone: true,
   imports: [AppButtonComponent],
   template: `
-    <div class="error-banner" role="alert">
-      <span class="error-banner__message">{{ message }}</span>
+    <div class="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[#fecdd3] bg-[#fff1f3] px-4 py-3 text-sm text-[#d4183d]" role="alert">
+      <span class="flex-1">{{ message }}</span>
       @if (showRetry) {
         <app-button variant="secondary" (click)="retry.emit()">Retry</app-button>
       }
     </div>
-  `,
-  styles: `
-    .error-banner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-3);
-      padding: var(--space-3) var(--space-4);
-      background: var(--color-danger-bg);
-      border: 1px solid #f5c6cb;
-      border-radius: var(--radius-md);
-      color: var(--color-danger);
-      font-size: 14px;
-      margin-bottom: var(--space-4);
-    }
-
-    .error-banner__message {
-      flex: 1;
-    }
   `
 })
 export class ErrorBannerComponent {

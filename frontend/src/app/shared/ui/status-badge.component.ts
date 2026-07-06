@@ -1,44 +1,18 @@
+import { NgClass } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { VobStatus } from '../../core/models/vob.models';
 
 @Component({
   selector: 'app-status-badge',
   standalone: true,
+  imports: [NgClass],
   template: `
-    <span class="badge" [class]="'badge--' + status.toLowerCase()">
+    <span
+      class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap"
+      [ngClass]="badgeClasses"
+    >
       {{ label }}
     </span>
-  `,
-  styles: `
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: var(--radius-sm);
-      text-transform: capitalize;
-      white-space: nowrap;
-    }
-
-    .badge--queued {
-      background: var(--color-neutral-bg);
-      color: var(--color-neutral);
-    }
-
-    .badge--in_progress {
-      background: var(--color-warning-bg);
-      color: var(--color-warning);
-    }
-
-    .badge--verified {
-      background: var(--color-success-bg);
-      color: var(--color-success);
-    }
-
-    .badge--failed_to_verify {
-      background: var(--color-danger-bg);
-      color: var(--color-danger);
-    }
   `
 })
 export class StatusBadgeComponent {
@@ -52,5 +26,15 @@ export class StatusBadgeComponent {
       FAILED_TO_VERIFY: 'Failed'
     };
     return labels[this.status];
+  }
+
+  get badgeClasses(): string[] {
+    const classes: Record<VobStatus, string[]> = {
+      QUEUED: ['bg-[#ececf0]', 'text-[#52525b]', 'border-black/10'],
+      IN_PROGRESS: ['bg-[#fffbeb]', 'text-[#a16207]', 'border-[#fde68a]'],
+      VERIFIED: ['bg-[#ecfdf3]', 'text-[#15803d]', 'border-[#bbf7d0]'],
+      FAILED_TO_VERIFY: ['bg-[#fff1f3]', 'text-[#d4183d]', 'border-[#fecdd3]']
+    };
+    return classes[this.status];
   }
 }
