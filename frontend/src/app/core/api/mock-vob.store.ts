@@ -129,8 +129,30 @@ export class MockVobStore {
     }
   ];
 
-  listByStatus(status: VobStatus, query: ListQuery = {}): Observable<CursorPage<Vob>> {
-    let filtered = this.vobs.filter((v) => v.status === status);
+  list(query: ListQuery & { status?: VobStatus | 'ALL' } = {}): Observable<CursorPage<Vob>> {
+    let filtered = [...this.vobs];
+    if (query.status && query.status !== 'ALL') {
+      filtered = filtered.filter((v) => v.status === query.status);
+    }
+    if (query.search) {
+      const term = query.search.toLowerCase();
+      filtered = filtered.filter((v) => {
+        const fields: Record<string, string> = {
+          id: v.id,
+          patientId: v.patientId,
+          payerName: v.insurance.payerName,
+          memberId: v.insurance.memberId,
+          groupNumber: v.insurance.groupNumber,
+          planType: v.insurance.planType,
+          priority: v.priority,
+          assignedToUserId: v.assignedToUserId ?? ''
+        };
+        if (query.searchField && query.searchField !== 'all') {
+          return fields[query.searchField]?.toLowerCase().includes(term) ?? false;
+        }
+        return Object.values(fields).some((value) => value.toLowerCase().includes(term));
+      });
+    }
     filtered.sort((a, b) => {
       const cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       return query.sortOrder === 'asc' ? cmp : -cmp;
@@ -143,6 +165,10 @@ export class MockVobStore {
       nextCursor: nextStart < filtered.length ? String(nextStart) : null,
       hasMore: nextStart < filtered.length
     }).pipe(delay(200));
+  }
+
+  listByStatus(status: VobStatus, query: ListQuery = {}): Observable<CursorPage<Vob>> {
+    return this.list({ ...query, status });
   }
 
   listByPatientId(patientId: string): Observable<Vob[]> {

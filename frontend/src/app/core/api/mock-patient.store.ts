@@ -50,12 +50,19 @@ export class MockPatientStore {
     let filtered = [...this.patients];
     if (query.search) {
       const term = query.search.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.mrn.toLowerCase().includes(term) ||
-          p.firstName.toLowerCase().includes(term) ||
-          p.lastName.toLowerCase().includes(term)
-      );
+      filtered = filtered.filter((p) => {
+        const fields: Record<string, string> = {
+          mrn: p.mrn,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          phone: p.phone,
+          name: `${p.firstName} ${p.lastName}`
+        };
+        if (query.searchField && query.searchField !== 'all') {
+          return fields[query.searchField]?.toLowerCase().includes(term) ?? false;
+        }
+        return Object.values(fields).some((value) => value.toLowerCase().includes(term));
+      });
     }
     filtered.sort((a, b) => {
       const cmp = a.lastName.localeCompare(b.lastName);

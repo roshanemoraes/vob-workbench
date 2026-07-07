@@ -8,4 +8,5 @@ export interface ListQuery {
   cursor?: string;
   sortOrder?: 'asc' | 'desc';
   search?: string;
+  searchField?: string;
 }
