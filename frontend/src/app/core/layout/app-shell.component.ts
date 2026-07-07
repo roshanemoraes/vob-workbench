@@ -10,11 +10,11 @@ import { TopBarComponent } from './top-bar.component';
   standalone: true,
   imports: [RouterOutlet, SidebarNavigationComponent, TopBarComponent, ToastOutletComponent],
   template: `
-    <div class="min-h-screen bg-white text-[#030213]">
+    <div class="flex h-screen flex-col overflow-hidden bg-white text-[#030213]">
       <app-top-bar />
-      <div class="flex min-h-0 flex-1 max-md:flex-col">
+      <div class="flex min-h-0 flex-1 items-stretch overflow-hidden max-md:flex-col">
         <app-sidebar-navigation />
-        <main class="min-w-0 flex-1 overflow-auto p-6 max-md:p-3">
+        <main class="min-w-0 flex-1 overflow-auto bg-[#f7f7f5] p-6 max-md:p-3">
           <router-outlet />
         </main>
       </div>
