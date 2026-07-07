@@ -21,7 +21,12 @@ import { VerifyApiButtonComponent } from './verify-api-button.component';
           </ng-container>
         }
         @case ('IN_PROGRESS') {
-          <app-verify-api-button [vobId]="vob.id" (verified)="verified.emit($event)" />
+          <app-verify-api-button
+            [vobId]="vob.id"
+            (verificationStarted)="actionStarted.emit()"
+            (verificationFailed)="apiVerificationFailed.emit()"
+            (verified)="verified.emit($event)"
+          />
           <ng-container *appHasPermission="'VOB_VERIFY'">
             <app-button variant="secondary" (click)="goManual()">Verify Manually</app-button>
           </ng-container>
@@ -34,7 +39,13 @@ import { VerifyApiButtonComponent } from './verify-api-button.component';
       display: flex;
       flex-wrap: wrap;
       gap: var(--space-2);
-      margin-bottom: var(--space-4);
+      justify-content: flex-end;
+    }
+
+    @media (max-width: 900px) {
+      .action-bar {
+        justify-content: flex-start;
+      }
     }
   `
 })
@@ -42,6 +53,8 @@ export class VobActionBarComponent {
   @Input({ required: true }) vob!: Vob;
   @Output() updated = new EventEmitter<Vob>();
   @Output() verified = new EventEmitter<Vob>();
+  @Output() actionStarted = new EventEmitter<void>();
+  @Output() apiVerificationFailed = new EventEmitter<void>();
 
   private readonly vobStore = inject(MockVobStore);
   private readonly userStore = inject(MockCurrentUserStore);
@@ -68,6 +81,7 @@ export class VobActionBarComponent {
   }
 
   goManual(): void {
+    this.actionStarted.emit();
     this.router.navigate(['/app/vob', this.vob.id, 'verify-manual']);
   }
 }

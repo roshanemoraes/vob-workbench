@@ -46,6 +46,6 @@ import { Component, Input } from '@angular/core';
   `
 })
 export class LoadingStateComponent {
-  @Input() message = 'Loading…';
+  @Input() message = 'Loading...';
   @Input() inline = false;
 }

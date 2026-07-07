@@ -14,9 +14,6 @@ type VerifyState = 'idle' | 'loading' | 'success' | 'failed' | 'unavailable';
   imports: [AppButtonComponent, PermissionGateDirective],
   template: `
     <ng-container *appHasPermission="'VOB_VERIFY'">
-      @if (state() === 'unavailable') {
-        <span class="verify-msg">API unavailable — use manual verification.</span>
-      }
       <app-button
         variant="primary"
         [loading]="state() === 'loading'"
@@ -39,6 +36,8 @@ type VerifyState = 'idle' | 'loading' | 'success' | 'failed' | 'unavailable';
 export class VerifyApiButtonComponent {
   @Input({ required: true }) vobId!: string;
   @Output() verified = new EventEmitter<Vob>();
+  @Output() verificationStarted = new EventEmitter<void>();
+  @Output() verificationFailed = new EventEmitter<void>();
 
   private readonly vobStore = inject(MockVobStore);
   private readonly userStore = inject(MockCurrentUserStore);
@@ -48,7 +47,7 @@ export class VerifyApiButtonComponent {
 
   get buttonLabel(): string {
     switch (this.state()) {
-      case 'loading': return 'Verifying…';
+      case 'loading': return 'Verifying...';
       case 'success': return 'Verified';
       case 'failed': return 'Verification failed';
       default: return 'Verify API';
@@ -59,11 +58,13 @@ export class VerifyApiButtonComponent {
     const userId = this.userStore.currentUser()?.id;
     if (!userId) return;
     this.state.set('loading');
+    this.verificationStarted.emit();
     this.vobStore.verifyVobWithApi(this.vobId, userId).subscribe({
       next: ({ vob, unavailable }) => {
         if (unavailable) {
           this.state.set('unavailable');
           this.toast.error('Verification API is unavailable.');
+          this.verificationFailed.emit();
           return;
         }
         this.state.set('success');
@@ -73,6 +74,7 @@ export class VerifyApiButtonComponent {
       error: () => {
         this.state.set('failed');
         this.toast.error('API verification failed.');
+        this.verificationFailed.emit();
       }
     });
   }

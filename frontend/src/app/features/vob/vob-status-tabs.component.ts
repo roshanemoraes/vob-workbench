@@ -7,7 +7,7 @@ import { VobStatus } from '../../core/models/vob.models';
   standalone: true,
   imports: [NgClass],
   template: `
-    <div class="mb-4 flex w-fit gap-1 rounded-xl border border-black/10 bg-[#ececf0] p-1" role="tablist">
+    <div class="flex w-fit gap-1 rounded-xl border border-black/10 bg-[#ececf0] p-1" role="tablist">
       @for (tab of tabs; track tab.status) {
         <button
           type="button"
