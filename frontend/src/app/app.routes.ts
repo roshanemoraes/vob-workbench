@@ -20,11 +20,21 @@ export const routes: Routes = [
       },
       {
         path: 'patients',
+        redirectTo: 'patients/list',
+        pathMatch: 'full'
+      },
+      {
+        path: 'patients/list',
         loadComponent: () =>
           import('./features/patients/patient-list-page.component').then((m) => m.PatientListPageComponent)
       },
       {
         path: 'patients/new',
+        redirectTo: 'patients/add',
+        pathMatch: 'full'
+      },
+      {
+        path: 'patients/add',
         loadComponent: () =>
           import('./features/patients/patient-create-page.component').then((m) => m.PatientCreatePageComponent)
       },
@@ -35,11 +45,21 @@ export const routes: Routes = [
       },
       {
         path: 'vob',
+        redirectTo: 'vob/list',
+        pathMatch: 'full'
+      },
+      {
+        path: 'vob/list',
         loadComponent: () =>
           import('./features/vob/vob-list-page.component').then((m) => m.VobListPageComponent)
       },
       {
         path: 'vob/new',
+        redirectTo: 'vob/add',
+        pathMatch: 'full'
+      },
+      {
+        path: 'vob/add',
         loadComponent: () =>
           import('./features/vob/vob-create-page.component').then((m) => m.VobCreatePageComponent)
       },
