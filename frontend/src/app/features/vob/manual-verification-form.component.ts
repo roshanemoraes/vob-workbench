@@ -2,9 +2,10 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { PageHeaderComponent } from '../../core/layout/page-header.component';
+import { Vob } from '../../core/models/vob.models';
 import { AppButtonComponent } from '../../shared/ui/app-button.component';
 import { DateInputComponent } from '../../shared/forms/date-input.component';
 import { MoneyInputComponent } from '../../shared/forms/money-input.component';
@@ -76,12 +77,13 @@ export class ManualVerificationFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly vobStore = inject(MockVobStore);
+  private readonly vobStore = inject(VobApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
 
   vobId = '';
   readonly saving = signal(false);
+  readonly vob = signal<Vob | null>(null);
 
   readonly resultOptions = [
     { value: 'VERIFIED', label: 'Verified' },
@@ -116,6 +118,20 @@ export class ManualVerificationFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.vobId = this.route.snapshot.paramMap.get('id')!;
+    this.vobStore.getById(this.vobId).subscribe({
+      next: (vob) => {
+        if (!vob) {
+          this.toast.error('VOB not found.');
+          this.router.navigate(['/app/vob/list']);
+          return;
+        }
+        this.vob.set(vob);
+      },
+      error: () => {
+        this.toast.error('Failed to load VOB.');
+        this.router.navigate(['/app/vob/list']);
+      }
+    });
   }
 
   cancel(): void {
@@ -124,6 +140,11 @@ export class ManualVerificationFormComponent implements OnInit {
 
   submit(): void {
     if (this.form.invalid) return;
+    const vob = this.vob();
+    if (!vob) {
+      this.toast.error('VOB is still loading. Please try again.');
+      return;
+    }
     this.saving.set(true);
     const raw = this.form.getRawValue();
     const userId = this.userStore.currentUser()?.id ?? 'unknown';
@@ -132,6 +153,7 @@ export class ManualVerificationFormComponent implements OnInit {
       .verifyVobManually(
         this.vobId,
         {
+          version: vob.version,
           result: raw.result as 'VERIFIED' | 'FAILED_TO_VERIFY',
           coverageActive: raw.coverageActive === 'true' ? true : raw.coverageActive === 'false' ? false : null,
           networkStatus: raw.networkStatus as 'IN_NETWORK' | 'OUT_OF_NETWORK' | 'UNKNOWN',

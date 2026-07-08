@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Gender } from '../../core/models/patient.models';
 import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.component';
@@ -388,7 +388,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
 })
 export class PatientCreatePageComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly patientStore = inject(MockPatientStore);
+  private readonly patientStore = inject(PatientApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
@@ -434,7 +434,7 @@ export class PatientCreatePageComponent {
     this.saving.set(true);
     const userId = this.userStore.currentUser()?.id ?? 'unknown';
     const { phoneCountryCode, ...patient } = this.form.getRawValue();
-    const request: Parameters<MockPatientStore['create']>[0] = {
+    const request: Parameters<PatientApiService['create']>[0] = {
       ...patient,
       gender: patient.gender as Gender,
       phone: `${phoneCountryCode} ${patient.phone}`.trim()

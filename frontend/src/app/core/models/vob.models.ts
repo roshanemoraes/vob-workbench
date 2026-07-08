@@ -39,6 +39,7 @@ export interface EligibilityResult {
 
 export interface Vob {
   id: string;
+  version: number;
   patientId: string;
   insurance: InsurancePolicy;
   dateOfService: string;
@@ -59,6 +60,7 @@ export interface CreateVobRequest {
 }
 
 export interface ManualVerificationRequest {
+  version: number;
   result: 'VERIFIED' | 'FAILED_TO_VERIFY';
   coverageActive: boolean | null;
   networkStatus: NetworkStatus | null;

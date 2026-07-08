@@ -2,8 +2,8 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Patient } from '../../core/models/patient.models';
 import { CreateVobRequest, RelationshipToSubscriber, VobPriority } from '../../core/models/vob.models';
@@ -596,8 +596,8 @@ export class VobCreatePageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly patientStore = inject(MockPatientStore);
-  private readonly vobStore = inject(MockVobStore);
+  private readonly patientStore = inject(PatientApiService);
+  private readonly vobStore = inject(VobApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
 

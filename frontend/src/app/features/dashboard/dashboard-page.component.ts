@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { VobStatus } from '../../core/models/vob.models';
 import { PageHeaderComponent } from '../../core/layout/page-header.component';
 import { LoadingStateComponent } from '../../shared/ui/loading-state.component';
@@ -65,7 +65,7 @@ import { StatusSummaryGridComponent } from './status-summary-grid.component';
   `
 })
 export class DashboardPageComponent implements OnInit {
-  private readonly vobStore = inject(MockVobStore);
+  private readonly vobStore = inject(VobApiService);
   readonly userStore = inject(MockCurrentUserStore);
 
   readonly loading = signal(true);

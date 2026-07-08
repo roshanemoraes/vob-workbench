@@ -2,8 +2,8 @@ import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Patient } from '../../core/models/patient.models';
 import { Vob, VobStatus } from '../../core/models/vob.models';
@@ -523,8 +523,8 @@ import { VobTableComponent } from './vob-table.component';
 export class VobListPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly vobStore = inject(MockVobStore);
-  private readonly patientStore = inject(MockPatientStore);
+  private readonly vobStore = inject(VobApiService);
+  private readonly patientStore = inject(PatientApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
 

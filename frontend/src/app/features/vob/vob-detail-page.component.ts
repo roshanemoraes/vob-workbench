@@ -1,8 +1,8 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { Patient } from '../../core/models/patient.models';
 import { Vob } from '../../core/models/vob.models';
 import { LoadingStateComponent } from '../../shared/ui/loading-state.component';
@@ -945,8 +945,8 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
 export class VobDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly vobStore = inject(MockVobStore);
-  private readonly patientStore = inject(MockPatientStore);
+  private readonly vobStore = inject(VobApiService);
+  private readonly patientStore = inject(PatientApiService);
 
   readonly loading = signal(true);
   readonly vob = signal<Vob | null>(null);
