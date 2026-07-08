@@ -33,7 +33,7 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
 
               <label class="login-form__field">
                 <span>Password</span>
-                <input type="password" placeholder="Name" formControlName="password" />
+                <input type="password" placeholder="Enter your password" formControlName="password" />
                 <button type="button" class="login-form__link">Forgot password?</button>
               </label>
 
@@ -66,7 +66,7 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
             </p>
 
             <p class="login-card__hint">
-              Dev users: admin/admin, frontdesk/frontdesk, specialist/specialist
+              Dev users: admin/admin123, frontdesk/frontdesk123, specialist/specialist123
             </p>
           </div>
         </section>
@@ -319,12 +319,13 @@ export class LoginPageComponent {
     this.loading.set(true);
     this.error.set(null);
     const { username, password } = this.form.getRawValue();
-    const success = this.userStore.login(username, password);
-    this.loading.set(false);
-    if (success) {
-      this.router.navigate(['/app/dashboard']);
-    } else {
-      this.error.set('Invalid username or password.');
-    }
+    this.userStore.login(username, password).subscribe((success) => {
+      this.loading.set(false);
+      if (success) {
+        this.router.navigate(['/app/dashboard']);
+      } else {
+        this.error.set('Invalid username or password.');
+      }
+    });
   }
 }

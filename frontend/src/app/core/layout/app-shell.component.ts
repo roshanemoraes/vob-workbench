@@ -29,6 +29,13 @@ export class AppShellComponent implements OnInit {
   ngOnInit(): void {
     if (!this.userStore.isAuthenticated()) {
       this.router.navigate(['/login']);
+      return;
     }
+
+    this.userStore.loadCurrentUser().subscribe((authenticated) => {
+      if (!authenticated) {
+        this.router.navigate(['/login']);
+      }
+    });
   }
 }
