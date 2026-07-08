@@ -10,6 +10,7 @@ import java.time.LocalDate;
 public record VobResponseDTO(
 
         String id,
+        Long version,
         String patientId,
         InsurancePolicyResponseDTO insurance,
         LocalDate dateOfService,
@@ -25,6 +26,7 @@ public record VobResponseDTO(
 
         return new VobResponseDTO(
                 vob.getId(),
+                vob.getVersion(),
                 vob.getPatientId(),
                 InsurancePolicyResponseDTO.from(vob.getInsurancePolicy()),
                 vob.getDateOfService(),

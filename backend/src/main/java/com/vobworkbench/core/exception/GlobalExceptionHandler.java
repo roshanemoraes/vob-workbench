@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -53,6 +55,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    ResponseEntity<ApiError> handleMissingRequestHeader(MissingRequestHeaderException exception, HttpServletRequest request) {
+        log.warn("Missing request header for path={}: {}", request.getRequestURI(), exception.getMessage());
+        return build(HttpStatus.BAD_REQUEST, exception.getHeaderName() + " header is required", request);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException exception, HttpServletRequest request) {
         log.warn("Bad request for path={}: {}", request.getRequestURI(), exception.getMessage());
@@ -65,10 +73,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.NOT_FOUND, exception.getMessage(), request);
     }
 
-    @ExceptionHandler({ConflictException.class, DuplicateKeyException.class})
+    @ExceptionHandler({ConflictException.class, DuplicateKeyException.class, OptimisticLockingFailureException.class})
     ResponseEntity<ApiError> handleConflict(Exception exception, HttpServletRequest request) {
         log.warn("Conflict for path={}: {}", request.getRequestURI(), exception.getMessage());
-        return build(HttpStatus.CONFLICT, exception.getMessage(), request);
+        String message = exception instanceof OptimisticLockingFailureException
+                ? "This resource was updated by another user. Refresh and try again."
+                : exception.getMessage();
+        return build(HttpStatus.CONFLICT, message, request);
     }
 
     @ExceptionHandler(ServiceUnavailableException.class)

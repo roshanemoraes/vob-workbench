@@ -123,7 +123,8 @@ public class VobService {
         Update update = new Update()
             .set("status", nextStatus)
             .set("assignedToUserId", principal.getId())
-            .set("updatedAt", Instant.now());
+            .set("updatedAt", Instant.now())
+            .inc("version", 1);
 
         Vob updated = mongoTemplate.findAndModify(
             query,
@@ -138,10 +139,11 @@ public class VobService {
         throw new ConflictException("VOB is not in QUEUED status and cannot be claimed");
     }
 
-    public VobResponseDTO verifyVobWithApi(String vobId, UserPrincipal principal) {
+    public VobResponseDTO verifyVobWithApi(String vobId, String ifMatch, UserPrincipal principal) {
 
         Vob vob = getExistingVob(vobId);
         ensureAssignedToCurrentUserOrAdmin(vob, principal);
+        ensureExpectedVersion(vob, parseExpectedVersion(ifMatch));
 
         ApiEligibilityVerificationResult apiResult = mockEligibilityVerificationService.verify(vob);
         VobAction action = apiResult.verified() ? VobAction.API_VERIFY_SUCCESS : VobAction.API_VERIFY_FAILED;
@@ -158,6 +160,7 @@ public class VobService {
 
         Vob vob = getExistingVob(vobId);
         ensureAssignedToCurrentUserOrAdmin(vob, principal);
+        ensureExpectedVersion(vob, request.version());
         VobAction action = toManualVerificationAction(request.result());
         VobStatus nextStatus = vobStateMachine.nextStatus(vob.getStatus(), action);
 
@@ -204,6 +207,32 @@ public class VobService {
         }
 
         throw new AccessDeniedException("Only the assigned specialist or admin can verify this VOB");
+    }
+
+    private void ensureExpectedVersion(Vob vob, Long expectedVersion) {
+
+        Long currentVersion = vob.getVersion();
+        if (currentVersion == null || !currentVersion.equals(expectedVersion)) {
+            throw new ConflictException("This VOB was updated by another user. Refresh and try again.");
+        }
+    }
+
+    private Long parseExpectedVersion(String ifMatch) {
+
+        if (!StringUtils.hasText(ifMatch)) {
+            throw new IllegalArgumentException("If-Match header is required");
+        }
+
+        String normalized = ifMatch.trim();
+        if (normalized.startsWith("\"") && normalized.endsWith("\"") && normalized.length() > 1) {
+            normalized = normalized.substring(1, normalized.length() - 1);
+        }
+
+        try {
+            return Long.parseLong(normalized);
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("If-Match header must contain the current VOB version");
+        }
     }
 
     private boolean isAdminUser(UserPrincipal principal) {
