@@ -20,8 +20,10 @@ public class Patient {
     @Indexed(unique = true)
     private String mrn;
 
+    @Indexed
     private String firstName;
 
+    @Indexed
     private String lastName;
 
     private LocalDate dateOfBirth;

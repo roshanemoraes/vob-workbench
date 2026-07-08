@@ -1,7 +1,9 @@
 package com.vobworkbench.feature.vob.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.bson.types.ObjectId;
 import org.springframework.data.domain.Sort;
@@ -89,11 +91,11 @@ public class VobService {
     }
 
     public VobQueueResponseDTO getVobListByStatus(VobStatus status, String cursor, int limit,
-        String sortOrder, UserPrincipal principal) {
+        String sortOrder, String patientId, String search, UserPrincipal principal) {
 
         Sort.Direction sortDirection = resolveSortDirection(sortOrder);
 
-        Query query = buildQueryForVobStatus(status, principal, limit, sortDirection);
+        Query query = buildQueryForVobStatus(status, patientId, search, principal, limit, sortDirection);
 
         if (StringUtils.hasText(cursor)) {
             VobQueueCursor decodedCursor = vobQueueCursorCodec.decode(cursor);
@@ -174,12 +176,16 @@ public class VobService {
 
     private boolean isAuthorizedToViewVob(Vob vob, UserPrincipal principal) {
 
-        if (!isAuthorizedToViewQueuedVobList(principal)) return false;
+        if (isAdminUser(principal)) {
+            return true;
+        }
 
-        VobStatus status = vob.getStatus();
-        if (!status.equals(VobStatus.QUEUED)) return principal.getId().equals(vob.getCreatedByUserId());
+        if (VobStatus.QUEUED.equals(vob.getStatus())) {
+            return isAuthorizedToViewQueuedVobList(principal);
+        }
 
-        return true;
+        return principal.getId().equals(vob.getAssignedToUserId())
+                || principal.getId().equals(vob.getCreatedByUserId());
     }
 
     private boolean isAuthorizedToViewQueuedVobList(UserPrincipal principal) {
@@ -259,17 +265,53 @@ public class VobService {
     }
 
     private Query buildQueryForVobStatus(
-            VobStatus status, UserPrincipal principal, int limit, Sort.Direction sortDirection) {
+            VobStatus status, String patientId, String search, UserPrincipal principal, int limit,
+            Sort.Direction sortDirection) {
 
         Query query = new Query()
-                .addCriteria(Criteria.where("status").is(status))
                 .with(Sort.by(
                         new Sort.Order(sortDirection, "createdAt"),
                         new Sort.Order(sortDirection, "_id")))
                 .limit(limit + 1);
 
-        if (!VobStatus.QUEUED.equals(status) && !isAdminUser(principal)) {
-            query.addCriteria(Criteria.where("assignedToUserId").is(principal.getId()));
+        List<Criteria> criteria = new ArrayList<>();
+
+        if (status != null) {
+            criteria.add(Criteria.where("status").is(status));
+        }
+
+        if (StringUtils.hasText(patientId)) {
+            criteria.add(Criteria.where("patientId").is(patientId));
+        }
+
+        if (StringUtils.hasText(search)) {
+            Pattern pattern = Pattern.compile(Pattern.quote(search.trim()), Pattern.CASE_INSENSITIVE);
+            List<Criteria> searchCriteria = new ArrayList<>(List.of(
+                    Criteria.where("patientId").regex(pattern),
+                    Criteria.where("insurancePolicy.payerName").regex(pattern),
+                    Criteria.where("insurancePolicy.memberId").regex(pattern),
+                    Criteria.where("insurancePolicy.groupNumber").regex(pattern),
+                    Criteria.where("insurancePolicy.planType").regex(pattern),
+                    Criteria.where("assignedToUserId").regex(pattern)
+            ));
+            if (ObjectId.isValid(search.trim())) {
+                searchCriteria.add(Criteria.where("_id").is(new ObjectId(search.trim())));
+            }
+            criteria.add(new Criteria().orOperator(searchCriteria.toArray(Criteria[]::new)));
+        }
+
+        if (!isAdminUser(principal)) {
+            criteria.add(new Criteria().orOperator(
+                    Criteria.where("status").is(VobStatus.QUEUED),
+                    Criteria.where("assignedToUserId").is(principal.getId()),
+                    Criteria.where("createdByUserId").is(principal.getId())
+            ));
+        }
+
+        if (criteria.size() == 1) {
+            query.addCriteria(criteria.get(0));
+        } else if (criteria.size() > 1) {
+            query.addCriteria(new Criteria().andOperator(criteria.toArray(Criteria[]::new)));
         }
 
         return query;

@@ -5,10 +5,12 @@ import com.vobworkbench.feature.user.entity.AppUser;
 import com.vobworkbench.feature.user.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(1)
 @ConditionalOnProperty(name = "vob.dev-seed.enabled", havingValue = "true")
 public class DevUserSeeder implements CommandLineRunner {
 

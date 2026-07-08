@@ -61,19 +61,21 @@ public class VobController {
 
     @GetMapping
     @PreAuthorize(SecurityExpressions.VOB_VIEW)
-    ResponseEntity<VobQueueResponseDTO> listVobsByStatus(
-            @RequestParam VobStatus status,
+    ResponseEntity<VobQueueResponseDTO> getVobList(
+            @RequestParam(required = false) VobStatus status,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit,
             @RequestParam(defaultValue = "asc") String sortOrder,
+            @RequestParam(required = false) String patientId,
+            @RequestParam(required = false) String search,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        return ResponseEntity.ok(vobService.getVobListByStatus(status, cursor, limit, sortOrder, principal));
+        return ResponseEntity.ok(vobService.getVobListByStatus(status, cursor, limit, sortOrder, patientId, search, principal));
     }
 
     @PostMapping("/{id}/claim")
     @PreAuthorize(SecurityExpressions.VOB_CLAIM)
-    ResponseEntity<VobResponseDTO> claimForProcessing(
+    ResponseEntity<VobResponseDTO> processVobClaim(
             @PathVariable String id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
@@ -92,7 +94,7 @@ public class VobController {
 
     @PostMapping("/{id}/verify-manual")
     @PreAuthorize(SecurityExpressions.VOB_VERIFY_MANUAL)
-    ResponseEntity<VobResponseDTO> verifyVobManually(
+    ResponseEntity<VobResponseDTO> validateManualVerification(
             @PathVariable String id,
             @Valid @RequestBody ManualVerificationRequestDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {
