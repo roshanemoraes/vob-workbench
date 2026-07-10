@@ -11,6 +11,7 @@ interface PatientPageResponse {
   items: Patient[];
   nextCursor: string | null;
   hasNext: boolean;
+  totalCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,7 +33,8 @@ export class PatientApiService {
       map((page) => ({
         items: page.items,
         nextCursor: page.nextCursor,
-        hasMore: page.hasNext
+        hasMore: page.hasNext,
+        totalCount: page.totalCount
       }))
     );
   }

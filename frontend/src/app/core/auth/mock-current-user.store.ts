@@ -1,19 +1,18 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, catchError, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { AuthResponse, AuthUserResponse, CurrentUser, Permission, UserRole } from '../models/auth.models';
 
 const API_BASE_URL = 'http://localhost:8080/api';
-const ACCESS_TOKEN_KEY = 'vob.accessToken';
-const REFRESH_TOKEN_KEY = 'vob.refreshToken';
 const CURRENT_USER_KEY = 'vob.currentUser';
 
 @Injectable({ providedIn: 'root' })
 export class MockCurrentUserStore {
   private readonly http = inject(HttpClient);
+  private accessToken: string | null = null;
 
   readonly currentUser = signal<CurrentUser | null>(this.readStoredUser());
-  readonly isAuthenticated = signal(Boolean(this.getAccessToken()));
+  readonly isAuthenticated = signal(Boolean(this.currentUser()));
 
   login(username: string, password: string): Observable<boolean> {
     return this.http.post<AuthResponse>(`${API_BASE_URL}/auth/login`, { username, password }).pipe(
@@ -24,42 +23,41 @@ export class MockCurrentUserStore {
   }
 
   logout(): void {
-    const refreshToken = this.getRefreshToken();
-    if (refreshToken) {
-      this.http.post<void>(`${API_BASE_URL}/auth/logout`, { refreshToken }).subscribe({
-        error: () => undefined
-      });
-    }
+    this.http.post<void>(`${API_BASE_URL}/auth/logout`, {}).subscribe({
+      error: () => undefined
+    });
     this.clearSession();
   }
 
   loadCurrentUser(): Observable<boolean> {
-    if (!this.getAccessToken()) {
-      this.clearSession();
-      return of(false);
-    }
+    const hasAccessToken = Boolean(this.getAccessToken());
+    const ensureAccessToken = hasAccessToken ? of(true) : this.refreshAccessToken();
 
-    return this.http.get<AuthUserResponse>(`${API_BASE_URL}/auth/me`).pipe(
-      tap((user) => this.setCurrentUser(this.toCurrentUser(user))),
-      map(() => true),
-      catchError(() => {
-        this.clearSession();
-        return of(false);
+    return ensureAccessToken.pipe(
+      switchMap((authenticated) => {
+        if (!authenticated) {
+          this.clearSession();
+          return of(false);
+        }
+
+        return this.http.get<AuthUserResponse>(`${API_BASE_URL}/auth/me`).pipe(
+          tap((user) => this.setCurrentUser(this.toCurrentUser(user))),
+          map(() => true),
+          catchError(() => {
+            this.clearSession();
+            return of(false);
+          })
+        );
       })
     );
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
-  }
-
-  getRefreshToken(): string | null {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
+    return this.accessToken;
   }
 
   clearSession(): void {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    this.accessToken = null;
     localStorage.removeItem(CURRENT_USER_KEY);
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
@@ -81,10 +79,17 @@ export class MockCurrentUserStore {
   }
 
   private storeSession(response: AuthResponse): void {
-    localStorage.setItem(ACCESS_TOKEN_KEY, response.accessToken);
-    localStorage.setItem(REFRESH_TOKEN_KEY, response.refreshToken);
+    this.accessToken = response.accessToken;
     this.setCurrentUser(this.toCurrentUser(response.user));
     this.isAuthenticated.set(true);
+  }
+
+  private refreshAccessToken(): Observable<boolean> {
+    return this.http.post<AuthResponse>(`${API_BASE_URL}/auth/refresh`, {}).pipe(
+      tap((response) => this.storeSession(response)),
+      map(() => true),
+      catchError(() => of(false))
+    );
   }
 
   private setCurrentUser(user: CurrentUser): void {

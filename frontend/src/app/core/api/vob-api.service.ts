@@ -16,6 +16,7 @@ interface VobPageResponse {
   items: Vob[];
   nextCursor: string | null;
   hasNext: boolean;
+  totalCount: number;
 }
 
 type VobListQuery = ListQuery & {
@@ -52,7 +53,8 @@ export class VobApiService {
       map((page) => ({
         items: page.items,
         nextCursor: page.nextCursor,
-        hasMore: page.hasNext
+        hasMore: page.hasNext,
+        totalCount: page.totalCount
       }))
     );
   }
@@ -83,10 +85,10 @@ export class VobApiService {
 
     return forkJoin(statuses.map((status) => this.list({ status, sortOrder: 'desc' }))).pipe(
       map((pages) => ({
-        QUEUED: pages[0].items.length,
-        IN_PROGRESS: pages[1].items.length,
-        VERIFIED: pages[2].items.length,
-        FAILED_TO_VERIFY: pages[3].items.length
+        QUEUED: pages[0].totalCount,
+        IN_PROGRESS: pages[1].totalCount,
+        VERIFIED: pages[2].totalCount,
+        FAILED_TO_VERIFY: pages[3].totalCount
       }))
     );
   }
