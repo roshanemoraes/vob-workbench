@@ -14,7 +14,9 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
         <section class="login-card__form-panel">
           <div class="login-card__form-inner">
             <div class="login-card__brand">
-              <span class="login-card__brand-icon">VB</span>
+              <span class="login-card__brand-icon">
+                <img src="/assets/icons/app-icon.png" alt="" aria-hidden="true" />
+              </span>
               <span>VOB Workbench</span>
             </div>
 
@@ -120,6 +122,12 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
       background: var(--color-primary);
       color: #fff;
       font-size: 12px;
+    }
+
+    .login-card__brand-icon img {
+      width: 19px;
+      height: 19px;
+      display: block;
     }
 
     h1 {

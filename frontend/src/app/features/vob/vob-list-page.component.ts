@@ -133,7 +133,7 @@ import { VobTableComponent } from './vob-table.component';
           <div>
             <span>Show</span>
             <strong>{{ vobs().length }}</strong>
-            <span>results</span>
+            <span>of {{ totalCount() }} VOBs</span>
             <label class="page-size">
               <span>per page</span>
               <select [value]="10" aria-label="Rows per page">
@@ -174,7 +174,7 @@ import { VobTableComponent } from './vob-table.component';
     .vob-list-toolbar h1 {
       color: #2d3438;
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 400;
     }
 
     .vob-list-controls {
@@ -533,6 +533,7 @@ export class VobListPageComponent implements OnInit {
   readonly patientLookup = signal<Record<string, Patient>>({});
   readonly selectedVobIds = signal<string[]>([]);
   readonly hasMore = signal(false);
+  readonly totalCount = signal(0);
   readonly status = signal<VobStatusFilter>('ALL');
   readonly statusMenuOpen = signal(false);
   selectedStatus: VobStatusFilter = 'ALL';
@@ -670,6 +671,7 @@ export class VobListPageComponent implements OnInit {
       .subscribe((page) => {
         this.vobs.update((list) => (append ? [...list, ...page.items] : page.items));
         this.hasMore.set(page.hasMore);
+        this.totalCount.set(page.totalCount);
         this.cursor = page.nextCursor ?? undefined;
         this.loading.set(false);
         this.loadPatientsFor(page.items);

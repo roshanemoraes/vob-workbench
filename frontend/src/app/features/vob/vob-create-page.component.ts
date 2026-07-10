@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
 import { PatientApiService } from '../../core/api/patient-api.service';
@@ -23,7 +23,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     <section class="vob-create-page">
       <header class="page-header">
         <h1>VOB Request Details</h1>
-        <p>Select a registered patient and provide insurance details for benefits verification</p>
+        <p>Select a registered patient and provide insurance details for benefits verification.</p>
       </header>
 
       @if (loadingPatients()) {
@@ -129,24 +129,61 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
               <div class="form-grid form-grid--2">
                 <label class="field">
                   <span>Payer name</span>
-                  <input type="text" formControlName="payerName" placeholder="e.g. Aetna" />
+                  <input
+                    type="text"
+                    formControlName="payerName"
+                    placeholder="e.g. Aetna"
+                    maxlength="80"
+                    [class.input-invalid]="isInvalid('insurance.payerName')"
+                  />
+                  @if (errorFor('insurance.payerName')) {
+                    <small class="field-error">{{ errorFor('insurance.payerName') }}</small>
+                  }
                 </label>
 
                 <label class="field">
                   <span>Member ID</span>
-                  <input type="text" formControlName="memberId" placeholder="e.g. MBR-284910" />
+                  <input
+                    type="text"
+                    formControlName="memberId"
+                    placeholder="e.g. MBR284910"
+                    minlength="5"
+                    maxlength="30"
+                    [class.input-invalid]="isInvalid('insurance.memberId')"
+                  />
+                  @if (errorFor('insurance.memberId')) {
+                    <small class="field-error">{{ errorFor('insurance.memberId') }}</small>
+                  }
                 </label>
               </div>
 
               <div class="form-grid form-grid--3">
                 <label class="field">
                   <span>Group number</span>
-                  <input type="text" formControlName="groupNumber" placeholder="e.g. GRP-2026" />
+                  <input
+                    type="text"
+                    formControlName="groupNumber"
+                    placeholder="e.g. GRP-2026"
+                    maxlength="30"
+                    [class.input-invalid]="isInvalid('insurance.groupNumber')"
+                  />
+                  @if (errorFor('insurance.groupNumber')) {
+                    <small class="field-error">{{ errorFor('insurance.groupNumber') }}</small>
+                  }
                 </label>
 
                 <label class="field">
                   <span>Plan type</span>
-                  <input type="text" formControlName="planType" placeholder="e.g. PPO" />
+                  <input
+                    type="text"
+                    formControlName="planType"
+                    placeholder="e.g. PPO"
+                    maxlength="30"
+                    [class.input-invalid]="isInvalid('insurance.planType')"
+                  />
+                  @if (errorFor('insurance.planType')) {
+                    <small class="field-error">{{ errorFor('insurance.planType') }}</small>
+                  }
                 </label>
 
                 <label class="field">
@@ -156,6 +193,9 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
                       <option [value]="option.value">{{ option.label }}</option>
                     }
                   </select>
+                  @if (errorFor('insurance.relationshipToSubscriber')) {
+                    <small class="field-error">{{ errorFor('insurance.relationshipToSubscriber') }}</small>
+                  }
                 </label>
               </div>
 
@@ -163,11 +203,17 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
                 <label class="field">
                   <span>Coverage start</span>
                   <app-date-picker-input formControlName="coverageStart" placeholder="Select start date" />
+                  @if (errorFor('insurance.coverageStart')) {
+                    <small class="field-error">{{ errorFor('insurance.coverageStart') }}</small>
+                  }
                 </label>
 
                 <label class="field">
                   <span>Coverage end</span>
                   <app-date-picker-input formControlName="coverageEnd" placeholder="Select end date" />
+                  @if (errorFor('insurance.coverageEnd')) {
+                    <small class="field-error">{{ errorFor('insurance.coverageEnd') }}</small>
+                  }
                 </label>
               </div>
             </section>
@@ -187,7 +233,14 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
               <div class="form-grid form-grid--2">
                 <label class="field">
                   <span>Date of service</span>
-                  <app-date-picker-input formControlName="dateOfService" placeholder="Select service date" />
+                  <app-date-picker-input
+                    formControlName="dateOfService"
+                    placeholder="Select service date"
+                    [minDate]="today"
+                  />
+                  @if (errorFor('dateOfService')) {
+                    <small class="field-error">{{ errorFor('dateOfService') }}</small>
+                  }
                 </label>
 
                 <label class="field">
@@ -197,6 +250,9 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
                       <option [value]="option.value">{{ option.label }}</option>
                     }
                   </select>
+                  @if (errorFor('priority')) {
+                    <small class="field-error">{{ errorFor('priority') }}</small>
+                  }
                 </label>
               </div>
             </section>
@@ -227,7 +283,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       margin: 0 0 6px;
       color: #1a1a18;
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 400;
       letter-spacing: 0;
     }
 
@@ -235,7 +291,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       margin: 0;
       color: #8a8983;
       font-size: 13.5px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .vob-create-panel {
@@ -264,7 +320,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       margin: 0;
       color: #1a1a18;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .icon-circle {
@@ -326,7 +382,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       gap: 6px;
       color: #5f5e5a;
       font-size: 12.5px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .field input,
@@ -340,7 +396,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       color: #1a1a18;
       font: inherit;
       font-size: 13.5px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .field input::placeholder {
@@ -351,6 +407,17 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     .field select:focus {
       outline: 2px solid #e4f5f0;
       border-color: #0f8a72;
+    }
+
+    .field input.input-invalid,
+    .field select.input-invalid {
+      border-color: #d93025;
+    }
+
+    .field-error {
+      color: #b42318;
+      font-size: 11.5px;
+      font-weight: 400;
     }
 
     .patient-lookup {
@@ -402,7 +469,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       padding: 12px;
       color: #8a8983;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .patient-lookup__results {
@@ -437,7 +504,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     .patient-lookup__results small {
       color: #5f5e5a;
       font-size: 12px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .patient-card {
@@ -458,7 +525,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     .patient-name {
       color: #1a1a18;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .patient-mrn {
@@ -508,7 +575,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     .meta-value {
       color: #1a1a18;
       font-size: 13.5px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .gender-badge {
@@ -608,6 +675,7 @@ export class VobCreatePageComponent implements OnInit {
   readonly selectedPatient = signal<Patient | null>(null);
   patientSearchTerm = '';
   private patientSearchRequestId = 0;
+  readonly today = new Date().toISOString().slice(0, 10);
 
   readonly relationshipOptions = [
     { value: 'SELF', label: 'Self' },
@@ -624,16 +692,37 @@ export class VobCreatePageComponent implements OnInit {
   readonly form = this.fb.nonNullable.group({
     patientId: ['', Validators.required],
     insurance: this.fb.nonNullable.group({
-      payerName: ['', Validators.required],
-      memberId: ['', Validators.required],
-      groupNumber: ['', Validators.required],
-      planType: ['', Validators.required],
-      relationshipToSubscriber: ['SELF', Validators.required],
-      coverageStart: ['', Validators.required],
-      coverageEnd: ['', Validators.required]
-    }),
-    dateOfService: ['', Validators.required],
-    priority: ['ROUTINE', Validators.required]
+      payerName: ['', [
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(/^[A-Za-z0-9 .&'()-]{2,80}$/)
+      ]],
+      memberId: ['', [
+        Validators.required,
+        Validators.pattern(/^[A-Za-z0-9]{5,30}$/)
+      ]],
+      groupNumber: ['', [
+        Validators.required,
+        Validators.maxLength(30),
+        Validators.pattern(/^[A-Za-z0-9-]{2,30}$/)
+      ]],
+      planType: ['', [
+        Validators.required,
+        Validators.maxLength(30),
+        Validators.pattern(/^[A-Za-z0-9 -]{2,30}$/)
+      ]],
+      relationshipToSubscriber: ['SELF', [
+        Validators.required,
+        oneOfValidator(this.relationshipOptions.map((option) => option.value))
+      ]],
+      coverageStart: ['', [Validators.required, isoDateValidator()]],
+      coverageEnd: ['', [Validators.required, isoDateValidator()]]
+    }, { validators: coverageDateRangeValidator() }),
+    dateOfService: ['', [Validators.required, isoDateValidator(), futureOrPresentDateValidator()]],
+    priority: ['ROUTINE', [
+      Validators.required,
+      oneOfValidator(this.priorityOptions.map((option) => option.value))
+    ]]
   });
 
   ngOnInit(): void {
@@ -708,7 +797,10 @@ export class VobCreatePageComponent implements OnInit {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const userId = this.userStore.currentUser()?.id ?? 'unknown';
     const { patientId, insurance, dateOfService, priority } = this.form.getRawValue();
@@ -739,4 +831,80 @@ export class VobCreatePageComponent implements OnInit {
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
   }
+
+  isInvalid(path: string): boolean {
+    const control = this.form.get(path);
+    return Boolean(control?.invalid && (control.touched || control.dirty));
+  }
+
+  errorFor(path: string): string | null {
+    const control = this.form.get(path);
+    if (!control || !(control.touched || control.dirty)) {
+      return null;
+    }
+    if (control.hasError('required')) return 'Required';
+    if (control.hasError('pattern')) return this.patternMessage(path);
+    if (control.hasError('invalidDate')) return 'Use YYYY-MM-DD';
+    if (control.hasError('pastDate')) return 'Must not be in the past';
+    if (control.hasError('notAllowed')) return 'Choose a valid option';
+    if (path === 'insurance.coverageEnd' && this.form.controls.insurance.hasError('coverageEndBeforeStart')) {
+      return 'Must be after coverage start';
+    }
+    return null;
+  }
+
+  private patternMessage(path: string): string {
+    if (path === 'insurance.memberId') return 'Use 5-30 letters or numbers';
+    if (path === 'insurance.groupNumber') return 'Use letters, numbers, or hyphens';
+    if (path === 'insurance.planType') return 'Use letters, numbers, spaces, or hyphens';
+    return 'Use valid text characters';
+  }
+}
+
+function isoDateValidator(): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const value = control.value;
+    if (!value) return null;
+    return isValidIsoDate(value) ? null : { invalidDate: true };
+  };
+}
+
+function futureOrPresentDateValidator(): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const value = control.value;
+    if (!value || isoDateValidator()(control)) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    return value >= today ? null : { pastDate: true };
+  };
+}
+
+function coverageDateRangeValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const coverageStart = control.get('coverageStart')?.value;
+    const coverageEnd = control.get('coverageEnd')?.value;
+    if (!coverageStart || !coverageEnd || isoDateValidator()(control.get('coverageStart')!) || isoDateValidator()(control.get('coverageEnd')!)) {
+      return null;
+    }
+    return coverageEnd > coverageStart ? null : { coverageEndBeforeStart: true };
+  };
+}
+
+function oneOfValidator(allowedValues: string[]): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const value = control.value;
+    if (!value) return null;
+    return allowedValues.includes(value) ? null : { notAllowed: true };
+  };
+}
+
+function isValidIsoDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
 }

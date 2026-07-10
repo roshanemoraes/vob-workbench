@@ -469,7 +469,7 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
       font: inherit;
       font-size: 14px;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .back-link:hover {
@@ -598,7 +598,7 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
       margin: 0 0 8px;
       color: #161616;
       font-size: 28px;
-      font-weight: 600;
+      font-weight: 400;
       letter-spacing: 0;
       line-height: 1.1;
     }
@@ -746,7 +746,7 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
       margin: 0;
       color: #222528;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .rows {
@@ -785,20 +785,20 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
     .rows dt {
       color: #7a8187;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .detail-list dt {
       color: #7a8187;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .rows dd {
       margin: 0;
       color: #262b2f;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400;
       text-align: right;
       word-break: break-word;
     }
@@ -807,14 +807,14 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
       margin: 0;
       color: #262b2f;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400;
       text-align: right;
       word-break: break-word;
     }
 
     .value--name {
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .value--link {
@@ -827,7 +827,7 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
     }
 
     .value--strong {
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .value--mono {
@@ -907,7 +907,7 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
       margin: 0;
       color: #7a8187;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     @media (max-width: 900px) {
