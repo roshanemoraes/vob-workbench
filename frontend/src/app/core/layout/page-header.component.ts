@@ -8,7 +8,7 @@ import { AppButtonComponent } from '../../shared/ui/app-button.component';
   template: `
     <header class="mb-6 flex items-start justify-between gap-4 max-sm:flex-col">
       <div>
-        <h1 class="text-2xl font-medium leading-tight text-[#030213]">{{ title }}</h1>
+        <h1 class="text-2xl font-normal leading-tight text-[#030213]">{{ title }}</h1>
         @if (subtitle) {
           <p class="mt-1 text-sm text-[#717182]">{{ subtitle }}</p>
         }

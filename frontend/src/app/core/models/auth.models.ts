@@ -38,12 +38,6 @@ export interface AuthUserResponse {
 export interface AuthResponse {
   tokenType: 'Bearer';
   accessToken: string;
-  refreshToken: string;
   expiresAt: string;
-  refreshExpiresAt: string;
   user: AuthUserResponse;
-}
-
-export interface RefreshTokenRequest {
-  refreshToken: string;
 }

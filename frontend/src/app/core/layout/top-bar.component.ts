@@ -10,7 +10,7 @@ import { UserRole } from '../models/auth.models';
     <header class="sticky top-0 z-20 flex h-12 items-center border-b border-black/10 bg-white px-6 max-md:px-3">
       <div class="ml-auto flex items-center gap-3 max-md:gap-2">
         <div class="relative">
-          <button type="button" class="flex h-8 items-center gap-2 rounded-md border border-black/10 bg-white px-3 text-sm transition-colors hover:bg-[#e9ebef]" (click)="menuOpen.set(!menuOpen())">
+          <button type="button" class="flex h-8 items-center gap-2 rounded-md border border-transparent bg-white px-3 text-sm transition-colors hover:bg-[#e9ebef] focus:outline-none focus:ring-0" (click)="menuOpen.set(!menuOpen())">
             <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#ececf0] text-xs text-[#030213]">{{ userInitial }}</span>
             <span class="max-sm:hidden">{{ userStore.currentUser()?.displayName ?? 'User' }}</span>
             <span class="text-xs text-[#717182] max-sm:hidden">({{ roleLabel }})</span>

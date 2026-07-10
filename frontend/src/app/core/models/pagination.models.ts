@@ -2,6 +2,7 @@ export interface CursorPage<T> {
   items: T[];
   nextCursor: string | null;
   hasMore: boolean;
+  totalCount: number;
 }
 
 export interface ListQuery {

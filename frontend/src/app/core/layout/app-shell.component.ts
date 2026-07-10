@@ -27,11 +27,6 @@ export class AppShellComponent implements OnInit {
   private readonly router = inject(Router);
 
   ngOnInit(): void {
-    if (!this.userStore.isAuthenticated()) {
-      this.router.navigate(['/login']);
-      return;
-    }
-
     this.userStore.loadCurrentUser().subscribe((authenticated) => {
       if (!authenticated) {
         this.router.navigate(['/login']);
