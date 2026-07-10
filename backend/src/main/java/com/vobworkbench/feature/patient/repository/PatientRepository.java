@@ -9,5 +9,7 @@ public interface PatientRepository extends MongoRepository<Patient, String> {
 
     Optional<Patient> findByMrn(String mrn);
 
+    Optional<Patient> findByPublicId(String publicId);
+
     boolean existsByMrn(String mrn);
 }

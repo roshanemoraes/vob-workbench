@@ -23,6 +23,11 @@ public class UserPrincipal implements UserDetails {
 
     public String getId() {
 
+        return user.getPublicId();
+    }
+
+    public String getDocumentId() {
+
         return user.getId();
     }
 

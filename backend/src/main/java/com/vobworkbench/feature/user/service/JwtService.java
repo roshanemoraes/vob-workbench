@@ -46,7 +46,7 @@ public class JwtService {
 
         Map<String, Object> claims = new LinkedHashMap<>();
         claims.put("sub", user.getUsername());
-        claims.put("uid", user.getId());
+        claims.put("uid", user.getPublicId());
         claims.put("role", user.getRole().name());
         claims.put("permissions", user.getRole().getPermissions().stream().map(Enum::name).toList());
         claims.put("iat", now.getEpochSecond());

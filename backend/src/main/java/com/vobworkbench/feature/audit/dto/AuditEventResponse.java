@@ -25,7 +25,7 @@ public record AuditEventResponse(
     public static AuditEventResponse from(AuditEvent event) {
 
         return new AuditEventResponse(
-            event.getId(),
+            event.getPublicId(),
             event.getActorUserId(),
             event.getActorRole(),
             event.getAction(),

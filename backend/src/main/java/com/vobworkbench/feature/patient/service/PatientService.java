@@ -65,7 +65,7 @@ public class PatientService {
                 principal,
                 AuditAction.PATIENT_CREATED,
                 AuditEntityType.PATIENT,
-                saved.getId(),
+                saved.getPublicId(),
                 Map.of("createdByUserId", principal.getId())
         );
         return PatientResponse.from(saved);
@@ -73,11 +73,15 @@ public class PatientService {
 
     public PatientResponse getById(String id, UserPrincipal principal) {
 
-        PatientResponse patient = patientRepository.findById(id)
-                .map(PatientResponse::from)
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
-        auditService.recordSuccess(principal, AuditAction.PATIENT_VIEWED, AuditEntityType.PATIENT, id, Map.of());
-        return patient;
+        Patient patient = findPatientByPublicIdOrDocumentId(id);
+        auditService.recordSuccess(
+                principal,
+                AuditAction.PATIENT_VIEWED,
+                AuditEntityType.PATIENT,
+                patient.getPublicId(),
+                Map.of()
+        );
+        return PatientResponse.from(patient);
     }
 
     public PatientPageResponse searchPatients(String cursor, int limit, String search, UserPrincipal principal) {
@@ -150,6 +154,13 @@ public class PatientService {
     private String cursorFor(Patient patient) {
 
         return patientCursorCodec.encode(patient.getCreatedAt(), patient.getId());
+    }
+
+    private Patient findPatientByPublicIdOrDocumentId(String id) {
+
+        return patientRepository.findByPublicId(id)
+                .or(() -> ObjectId.isValid(id) ? patientRepository.findById(id) : java.util.Optional.empty())
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
     }
 
     private void applyCriteria(Query query, List<Criteria> criteria) {

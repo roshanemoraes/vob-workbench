@@ -62,11 +62,11 @@ public class AuthService {
         RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokenService.issue(user);
 
         auditService.recordActor(
-                user.getId(),
+                user.getPublicId(),
                 user.getRole(),
                 AuditAction.LOGIN_SUCCESS,
                 AuditEntityType.AUTH,
-                user.getId(),
+                user.getPublicId(),
                 AuditOutcome.SUCCESS,
                 null,
                 Map.of()
@@ -96,7 +96,7 @@ public class AuthService {
                 token.value(),
                 token.expiresAt(),
                 new AuthResponse.UserSummary(
-                        user.getId(),
+                        user.getPublicId(),
                         user.getUsername(),
                         user.getRole(),
                         user.getRole().getPermissions()

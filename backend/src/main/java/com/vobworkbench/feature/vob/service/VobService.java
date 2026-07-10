@@ -72,11 +72,10 @@ public class VobService {
 
     public VobResponseDTO createVob(VobRequestDTO request, UserPrincipal principal) {
 
-        Patient patient = patientRepository.findById(request.patientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+        Patient patient = findPatientByPublicIdOrDocumentId(request.patientId());
 
         Vob vob = Vob.builder()
-                .patientId(patient.getId())
+                .patientId(patient.getPublicId())
                 .insurancePolicy(buildInsurancePolicy(request.insurance()))
                 .dateOfService(request.dateOfService())
                 .priority(request.priority())
@@ -89,9 +88,9 @@ public class VobService {
                 principal,
                 AuditAction.VOB_REQUEST_CREATED,
                 AuditEntityType.VOB_REQUEST,
-                saved.getId(),
+                saved.getPublicId(),
                 Map.of(
-                        "patientId", patient.getId(),
+                        "patientId", patient.getPublicId(),
                         "createdByUserId", principal.getId(),
                         "status", saved.getStatus().name(),
                         "priority", saved.getPriority().name()
@@ -102,10 +101,16 @@ public class VobService {
 
     public VobResponseDTO getVobById(String id, UserPrincipal principal) {
 
-        Vob vob = vobRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("VOB not found"));
+        Vob vob = findVobByPublicIdOrDocumentId(id);
 
         if (isAuthorizedToViewVob(vob, principal)) {
-            auditService.recordSuccess(principal, AuditAction.VOB_REQUEST_VIEWED, AuditEntityType.VOB_REQUEST, id, Map.of());
+            auditService.recordSuccess(
+                    principal,
+                    AuditAction.VOB_REQUEST_VIEWED,
+                    AuditEntityType.VOB_REQUEST,
+                    vob.getPublicId(),
+                    Map.of()
+            );
             return VobResponseDTO.from(vob);
         }
 
@@ -113,7 +118,7 @@ public class VobService {
                 principal,
                 AuditAction.ACCESS_DENIED,
                 AuditEntityType.VOB_REQUEST,
-                id,
+                vob.getPublicId(),
                 "User is not authorized to view this VOB",
                 Map.of("status", vob.getStatus().name())
         );
@@ -175,11 +180,11 @@ public class VobService {
 
     public VobResponseDTO claimForProcessing(String vobId, UserPrincipal principal) {
 
-        ObjectId objectId = toObjectId(vobId);
         VobStatus nextStatus = vobStateMachine.nextStatus(VobStatus.QUEUED, VobAction.START_PROCESSING);
-        Query query = new Query(Criteria
-            .where("_id").is(objectId)
-            .and("status").is(VobStatus.QUEUED));
+        Query query = new Query(new Criteria().andOperator(
+                vobIdentityCriteria(vobId),
+                Criteria.where("status").is(VobStatus.QUEUED)
+        ));
 
         Update update = new Update()
             .set("status", nextStatus)
@@ -199,7 +204,7 @@ public class VobService {
                     principal,
                     AuditAction.VOB_REQUEST_ASSIGNED,
                     AuditEntityType.VOB_REQUEST,
-                    updated.getId(),
+                    updated.getPublicId(),
                     Map.of(
                             "assignedToUserId", principal.getId(),
                             "fromStatus", VobStatus.QUEUED.name(),
@@ -210,7 +215,7 @@ public class VobService {
                     principal,
                     AuditAction.VOB_REQUEST_STATUS_CHANGED,
                     AuditEntityType.VOB_REQUEST,
-                    updated.getId(),
+                    updated.getPublicId(),
                     Map.of(
                             "fromStatus", VobStatus.QUEUED.name(),
                             "toStatus", updated.getStatus().name()
@@ -291,15 +296,29 @@ public class VobService {
 
     private Vob getExistingVob(String id) {
 
-        return vobRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("VOB not found"));
+        return findVobByPublicIdOrDocumentId(id);
     }
 
     private void ensureVobExists(String id) {
 
-        if (!ObjectId.isValid(id) || !vobRepository.existsById(id)) {
+        if (vobRepository.findByPublicId(id).isEmpty()
+                && (!ObjectId.isValid(id) || !vobRepository.existsById(id))) {
             throw new ResourceNotFoundException("VOB not found");
         }
+    }
+
+    private Vob findVobByPublicIdOrDocumentId(String id) {
+
+        return vobRepository.findByPublicId(id)
+                .or(() -> ObjectId.isValid(id) ? vobRepository.findById(id) : java.util.Optional.empty())
+                .orElseThrow(() -> new ResourceNotFoundException("VOB not found"));
+    }
+
+    private Patient findPatientByPublicIdOrDocumentId(String id) {
+
+        return patientRepository.findByPublicId(id)
+                .or(() -> ObjectId.isValid(id) ? patientRepository.findById(id) : java.util.Optional.empty())
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
     }
 
     private void ensureAssignedToCurrentUserOrAdmin(Vob vob, UserPrincipal principal, AuditAction action) {
@@ -312,7 +331,7 @@ public class VobService {
                 principal,
                 AuditAction.ACCESS_DENIED,
                 AuditEntityType.VOB_REQUEST,
-                vob.getId(),
+                vob.getPublicId(),
                 "Only the assigned specialist or admin can verify this VOB",
                 Map.of("attemptedAction", action.name(), "status", vob.getStatus().name())
         );
@@ -330,7 +349,7 @@ public class VobService {
                     principal,
                     AuditAction.VOB_REQUEST_VERIFICATION_ATTEMPTED,
                     AuditEntityType.VOB_REQUEST,
-                    vob.getId(),
+                    vob.getPublicId(),
                     "Version conflict",
                     metadata
             );
@@ -349,7 +368,7 @@ public class VobService {
                     principal,
                     auditAction,
                     AuditEntityType.VOB_REQUEST,
-                    vob.getId(),
+                    vob.getPublicId(),
                     exception.getMessage(),
                     Map.of("currentStatus", vob.getStatus().name(), "attemptedAction", action.name())
             );
@@ -374,22 +393,22 @@ public class VobService {
                 principal,
                 AuditAction.VOB_REQUEST_VERIFICATION_ATTEMPTED,
                 AuditEntityType.VOB_REQUEST,
-                vob.getId(),
+                vob.getPublicId(),
                 metadata
         );
         auditService.recordSuccess(
                 principal,
                 AuditAction.VOB_REQUEST_STATUS_CHANGED,
                 AuditEntityType.VOB_REQUEST,
-                vob.getId(),
+                vob.getPublicId(),
                 metadata
         );
         auditService.recordSuccess(
                 principal,
                 AuditAction.ELIGIBILITY_RESULT_CREATED,
                 AuditEntityType.ELIGIBILITY_RESULT,
-                vob.getId(),
-                Map.of("vobRequestId", vob.getId(), "method", method.name())
+                vob.getPublicId(),
+                Map.of("vobRequestId", vob.getPublicId(), "method", method.name())
         );
 
         if (VobStatus.VERIFIED.equals(nextStatus)) {
@@ -397,7 +416,7 @@ public class VobService {
                     principal,
                     AuditAction.VOB_REQUEST_LOCKED,
                     AuditEntityType.VOB_REQUEST,
-                    vob.getId(),
+                    vob.getPublicId(),
                     Map.of("status", nextStatus.name())
             );
         }
@@ -454,12 +473,17 @@ public class VobService {
         }
 
         if (StringUtils.hasText(patientId)) {
-            criteria.add(Criteria.where("patientId").is(patientId));
+            Patient patient = findPatientByPublicIdOrDocumentId(patientId);
+            criteria.add(new Criteria().orOperator(
+                    Criteria.where("patientId").is(patient.getPublicId()),
+                    Criteria.where("patientId").is(patient.getId())
+            ));
         }
 
         if (StringUtils.hasText(search)) {
             Pattern pattern = Pattern.compile(Pattern.quote(search.trim()), Pattern.CASE_INSENSITIVE);
             List<Criteria> searchCriteria = new ArrayList<>(List.of(
+                    Criteria.where("publicId").regex(pattern),
                     Criteria.where("patientId").regex(pattern),
                     Criteria.where("insurancePolicy.payerName").regex(pattern),
                     Criteria.where("insurancePolicy.memberId").regex(pattern),
@@ -515,13 +539,16 @@ public class VobService {
         return "desc".equalsIgnoreCase(sortOrder) ? Sort.Direction.DESC : Sort.Direction.ASC;
     }
 
-    private ObjectId toObjectId(String id) {
+    private Criteria vobIdentityCriteria(String id) {
 
-        if (!ObjectId.isValid(id)) {
-            throw new ResourceNotFoundException("VOB not found");
+        if (ObjectId.isValid(id)) {
+            return new Criteria().orOperator(
+                    Criteria.where("publicId").is(id),
+                    Criteria.where("_id").is(new ObjectId(id))
+            );
         }
 
-        return new ObjectId(id);
+        return Criteria.where("publicId").is(id);
     }
 
     private EligibilityResult buildEligibilityResult(

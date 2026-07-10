@@ -3,6 +3,7 @@ package com.vobworkbench.feature.audit.entity;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.vobworkbench.feature.user.entity.AppRole;
 import org.springframework.data.annotation.CreatedDate;
@@ -17,6 +18,9 @@ public class AuditEvent {
 
     @Id
     private String id;
+
+    @Indexed(unique = true, sparse = true)
+    private String publicId = UUID.randomUUID().toString();
 
     @Indexed
     private String actorUserId;
@@ -45,6 +49,16 @@ public class AuditEvent {
     public String getId() {
 
         return id;
+    }
+
+    public String getPublicId() {
+
+        return publicId == null ? id : publicId;
+    }
+
+    public void setPublicId(String publicId) {
+
+        this.publicId = publicId;
     }
 
     public String getActorUserId() {

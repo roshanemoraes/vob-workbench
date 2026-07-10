@@ -25,7 +25,7 @@ public record VobResponseDTO(
     public static VobResponseDTO from(Vob vob) {
 
         return new VobResponseDTO(
-                vob.getId(),
+                vob.getPublicId(),
                 vob.getVersion(),
                 vob.getPatientId(),
                 InsurancePolicyResponseDTO.from(vob.getInsurancePolicy()),

@@ -83,7 +83,7 @@ public class DevVobDataSeeder implements CommandLineRunner {
 
         List<Vob> vobs = List.of(
                 Vob.builder()
-                        .patientId(maria.getId())
+                        .patientId(maria.getPublicId())
                         .insurancePolicy(policy("BlueCross PPO", "BC123456", "GRP-100", "PPO", RelationshipToSubscriber.SELF))
                         .dateOfService(LocalDate.now().plusDays(7))
                         .priority(VobPriority.URGENT)
@@ -91,7 +91,7 @@ public class DevVobDataSeeder implements CommandLineRunner {
                         .createdByUserId(frontDeskUserId)
                         .build(),
                 Vob.builder()
-                        .patientId(james.getId())
+                        .patientId(james.getPublicId())
                         .insurancePolicy(policy("Aetna HMO", "AE789012", "GRP-200", "HMO", RelationshipToSubscriber.SELF))
                         .dateOfService(LocalDate.now().plusDays(3))
                         .priority(VobPriority.ROUTINE)
@@ -100,7 +100,7 @@ public class DevVobDataSeeder implements CommandLineRunner {
                         .createdByUserId(frontDeskUserId)
                         .build(),
                 Vob.builder()
-                        .patientId(priya.getId())
+                        .patientId(priya.getPublicId())
                         .insurancePolicy(policy("UnitedHealthcare", "UH345678", "GRP-300", "EPO", RelationshipToSubscriber.SELF))
                         .dateOfService(LocalDate.now().minusDays(5))
                         .priority(VobPriority.ROUTINE)
@@ -110,7 +110,7 @@ public class DevVobDataSeeder implements CommandLineRunner {
                         .createdByUserId(frontDeskUserId)
                         .build(),
                 Vob.builder()
-                        .patientId(maria.getId())
+                        .patientId(maria.getPublicId())
                         .insurancePolicy(policy("Cigna", "CI112233", "GRP-400", "PPO", RelationshipToSubscriber.SPOUSE))
                         .dateOfService(LocalDate.now().minusDays(20))
                         .priority(VobPriority.ROUTINE)
@@ -127,7 +127,7 @@ public class DevVobDataSeeder implements CommandLineRunner {
     private String userId(String username) {
 
         return userRepository.findByUsername(username)
-                .map(AppUser::getId)
+                .map(AppUser::getPublicId)
                 .orElse(username);
     }
 
