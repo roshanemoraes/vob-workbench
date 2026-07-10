@@ -12,6 +12,7 @@ public final class SecurityExpressions {
     public static final String VOB_CLAIM = "hasAuthority('VOB_CLAIM')";
     public static final String VOB_VERIFY_API = "hasAuthority('VOB_VERIFY_API')";
     public static final String VOB_VERIFY_MANUAL = "hasAuthority('VOB_VERIFY_MANUAL')";
+    public static final String AUDIT_VIEW = "hasAuthority('AUDIT_VIEW')";
 
     private SecurityExpressions() {
     }

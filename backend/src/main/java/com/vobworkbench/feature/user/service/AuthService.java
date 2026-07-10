@@ -1,13 +1,19 @@
 package com.vobworkbench.feature.user.service;
 
+import java.util.Map;
+
+import com.vobworkbench.feature.audit.entity.AuditAction;
+import com.vobworkbench.feature.audit.entity.AuditEntityType;
+import com.vobworkbench.feature.audit.entity.AuditOutcome;
+import com.vobworkbench.feature.audit.service.AuditService;
 import com.vobworkbench.feature.user.dto.AuthResponse;
 import com.vobworkbench.feature.user.dto.LoginRequest;
-import com.vobworkbench.feature.user.dto.RefreshTokenRequest;
 import com.vobworkbench.feature.user.entity.AppUser;
 import com.vobworkbench.feature.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,23 +23,37 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+    private final AuditService auditService;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             JwtService jwtService,
             RefreshTokenService refreshTokenService,
-            UserRepository userRepository
+            UserRepository userRepository,
+            AuditService auditService
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
         this.userRepository = userRepository;
+        this.auditService = auditService;
     }
 
-    public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password())
-        );
+    public AuthSession login(LoginRequest request) {
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.username(), request.password())
+            );
+        } catch (AuthenticationException exception) {
+            auditService.recordSystemFailure(
+                    AuditAction.LOGIN_FAILED,
+                    AuditEntityType.AUTH,
+                    null,
+                    "Invalid username or password",
+                    Map.of()
+            );
+            throw exception;
+        }
 
         AppUser user = userRepository.findByUsername(request.username())
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
@@ -41,30 +61,40 @@ public class AuthService {
         JwtService.Token token = jwtService.generateToken(user);
         RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokenService.issue(user);
 
-        return buildAuthResponse(user, token, refreshToken);
+        auditService.recordActor(
+                user.getId(),
+                user.getRole(),
+                AuditAction.LOGIN_SUCCESS,
+                AuditEntityType.AUTH,
+                user.getId(),
+                AuditOutcome.SUCCESS,
+                null,
+                Map.of()
+        );
+
+        return buildAuthSession(user, token, refreshToken);
     }
 
-    public AuthResponse refresh(RefreshTokenRequest request) {
-        RefreshTokenService.RefreshResult result = refreshTokenService.rotate(request.refreshToken());
+    public AuthSession refresh(String refreshToken) {
+        RefreshTokenService.RefreshResult result = refreshTokenService.rotate(refreshToken);
         JwtService.Token token = jwtService.generateToken(result.user());
-        return buildAuthResponse(result.user(), token, result.refreshToken());
+        return buildAuthSession(result.user(), token, result.refreshToken());
     }
 
-    public void logout(RefreshTokenRequest request) {
-        refreshTokenService.revoke(request.refreshToken());
+    public void logout(String refreshToken, UserPrincipal principal) {
+        refreshTokenService.revoke(refreshToken);
+        auditService.recordSuccess(principal, AuditAction.LOGOUT, AuditEntityType.AUTH, null, Map.of());
     }
 
-    private AuthResponse buildAuthResponse(
+    private AuthSession buildAuthSession(
             AppUser user,
             JwtService.Token token,
             RefreshTokenService.IssuedRefreshToken refreshToken
     ) {
-        return new AuthResponse(
+        AuthResponse response = new AuthResponse(
                 "Bearer",
                 token.value(),
-                refreshToken.value(),
                 token.expiresAt(),
-                refreshToken.expiresAt(),
                 new AuthResponse.UserSummary(
                         user.getId(),
                         user.getUsername(),
@@ -72,5 +102,12 @@ public class AuthService {
                         user.getRole().getPermissions()
                 )
         );
+        return new AuthSession(response, refreshToken);
+    }
+
+    public record AuthSession(
+            AuthResponse response,
+            RefreshTokenService.IssuedRefreshToken refreshToken
+    ) {
     }
 }
