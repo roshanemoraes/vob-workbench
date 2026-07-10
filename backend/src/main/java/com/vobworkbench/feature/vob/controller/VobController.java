@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,7 +47,7 @@ public class VobController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(vobService.createVob(request, principal.getId()));
+                .body(vobService.createVob(request, principal));
     }
 
     @GetMapping("/{id}")
@@ -60,19 +61,21 @@ public class VobController {
 
     @GetMapping
     @PreAuthorize(SecurityExpressions.VOB_VIEW)
-    ResponseEntity<VobQueueResponseDTO> listVobsByStatus(
-            @RequestParam VobStatus status,
+    ResponseEntity<VobQueueResponseDTO> getVobList(
+            @RequestParam(required = false) VobStatus status,
             @RequestParam(required = false) String cursor,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit,
             @RequestParam(defaultValue = "asc") String sortOrder,
+            @RequestParam(required = false) String patientId,
+            @RequestParam(required = false) String search,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        return ResponseEntity.ok(vobService.getVobListByStatus(status, cursor, limit, sortOrder, principal));
+        return ResponseEntity.ok(vobService.getVobListByStatus(status, cursor, limit, sortOrder, patientId, search, principal));
     }
 
     @PostMapping("/{id}/claim")
     @PreAuthorize(SecurityExpressions.VOB_CLAIM)
-    ResponseEntity<VobResponseDTO> claimForProcessing(
+    ResponseEntity<VobResponseDTO> processVobClaim(
             @PathVariable String id,
             @AuthenticationPrincipal UserPrincipal principal) {
 
@@ -83,14 +86,15 @@ public class VobController {
     @PreAuthorize(SecurityExpressions.VOB_VERIFY_API)
     ResponseEntity<VobResponseDTO> verifyVobWithApi(
             @PathVariable String id,
+            @RequestHeader("If-Match") String ifMatch,
             @AuthenticationPrincipal UserPrincipal principal) {
 
-        return ResponseEntity.ok(vobService.verifyVobWithApi(id, principal));
+        return ResponseEntity.ok(vobService.verifyVobWithApi(id, ifMatch, principal));
     }
 
     @PostMapping("/{id}/verify-manual")
     @PreAuthorize(SecurityExpressions.VOB_VERIFY_MANUAL)
-    ResponseEntity<VobResponseDTO> verifyVobManually(
+    ResponseEntity<VobResponseDTO> validateManualVerification(
             @PathVariable String id,
             @Valid @RequestBody ManualVerificationRequestDTO request,
             @AuthenticationPrincipal UserPrincipal principal) {

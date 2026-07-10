@@ -6,6 +6,7 @@ public record PatientPageResponse(
 
         List<PatientResponse> items,
         String nextCursor,
-        boolean hasNext
+        boolean hasNext,
+        long totalCount
 ) {
 }

@@ -14,7 +14,9 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
         <section class="login-card__form-panel">
           <div class="login-card__form-inner">
             <div class="login-card__brand">
-              <span class="login-card__brand-icon">VB</span>
+              <span class="login-card__brand-icon">
+                <img src="/assets/icons/app-icon.png" alt="" aria-hidden="true" />
+              </span>
               <span>VOB Workbench</span>
             </div>
 
@@ -33,7 +35,7 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
 
               <label class="login-form__field">
                 <span>Password</span>
-                <input type="password" placeholder="Name" formControlName="password" />
+                <input type="password" placeholder="Enter your password" formControlName="password" />
                 <button type="button" class="login-form__link">Forgot password?</button>
               </label>
 
@@ -66,7 +68,7 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
             </p>
 
             <p class="login-card__hint">
-              Dev users: admin/admin, frontdesk/frontdesk, specialist/specialist
+              Dev users: admin/admin123, frontdesk/frontdesk123, specialist/specialist123
             </p>
           </div>
         </section>
@@ -120,6 +122,12 @@ import { ErrorBannerComponent } from '../../shared/ui/error-banner.component';
       background: var(--color-primary);
       color: #fff;
       font-size: 12px;
+    }
+
+    .login-card__brand-icon img {
+      width: 19px;
+      height: 19px;
+      display: block;
     }
 
     h1 {
@@ -319,12 +327,13 @@ export class LoginPageComponent {
     this.loading.set(true);
     this.error.set(null);
     const { username, password } = this.form.getRawValue();
-    const success = this.userStore.login(username, password);
-    this.loading.set(false);
-    if (success) {
-      this.router.navigate(['/app/dashboard']);
-    } else {
-      this.error.set('Invalid username or password.');
-    }
+    this.userStore.login(username, password).subscribe((success) => {
+      this.loading.set(false);
+      if (success) {
+        this.router.navigate(['/app/dashboard']);
+      } else {
+        this.error.set('Invalid username or password.');
+      }
+    });
   }
 }

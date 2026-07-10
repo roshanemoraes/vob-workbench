@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Document(collection = "patients")
 @CompoundIndex(name = "patient_cursor_idx", def = "{'createdAt': -1, '_id': -1}")
@@ -17,11 +18,16 @@ public class Patient {
     @Id
     private String id;
 
+    @Indexed(unique = true, sparse = true)
+    private String publicId = UUID.randomUUID().toString();
+
     @Indexed(unique = true)
     private String mrn;
 
+    @Indexed
     private String firstName;
 
+    @Indexed
     private String lastName;
 
     private LocalDate dateOfBirth;
@@ -41,6 +47,14 @@ public class Patient {
 
     public String getId() {
         return id;
+    }
+
+    public String getPublicId() {
+        return publicId == null ? id : publicId;
+    }
+
+    public void setPublicId(String publicId) {
+        this.publicId = publicId;
     }
 
     public String getMrn() {

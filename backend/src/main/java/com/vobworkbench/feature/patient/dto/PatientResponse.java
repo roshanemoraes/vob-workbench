@@ -22,7 +22,7 @@ public record PatientResponse(
     public static PatientResponse from(Patient patient) {
 
         return new PatientResponse(
-                patient.getId(),
+                patient.getPublicId(),
                 patient.getMrn(),
                 patient.getFirstName(),
                 patient.getLastName(),

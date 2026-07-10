@@ -8,7 +8,7 @@ import { VobStatus } from '../../core/models/vob.models';
   imports: [NgClass],
   template: `
     <span
-      class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap"
+      class="inline-flex min-w-[96px] items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize whitespace-nowrap"
       [ngClass]="badgeClasses"
     >
       {{ label }}

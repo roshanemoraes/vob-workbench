@@ -190,6 +190,12 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
+        - name: search
+          in: query
+          required: false
+          description: Case-insensitive search across MRN, first name, last name, and phone.
+          schema:
+            type: string
       responses:
         '200':
           description: Patient page returned.
@@ -247,17 +253,29 @@ paths:
     get:
       tags:
         - VOB Requests
-      summary: List VOB requests by status using cursor-based pagination.
+      summary: List VOB requests using cursor-based pagination.
       operationId: listVobsByStatus
       security:
         - bearerAuth: []
       parameters:
         - name: status
           in: query
-          required: true
-          description: VOB status to filter by.
+          required: false
+          description: Optional VOB status to filter by. If omitted, accessible VOBs from all statuses are returned.
           schema:
             $ref: '#/components/schemas/VobStatus'
+        - name: patientId
+          in: query
+          required: false
+          description: Optional patient id filter.
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          description: Optional case-insensitive search across VOB id, patient id, payer, member id, group number, plan type, and assignee.
+          schema:
+            type: string
         - name: cursor
           in: query
           required: false
@@ -442,6 +460,14 @@ paths:
           schema:
             type: string
           example: 6682df563cc7f568fbf16220
+        - name: If-Match
+          in: header
+          required: true
+          description: Current VOB version from the latest VOB response. Used for optimistic locking.
+          schema:
+            type: integer
+            format: int64
+          example: 2
       responses:
         '200':
           description: VOB verification completed by API.
@@ -464,7 +490,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
         '409':
-          description: VOB is not in IN_PROGRESS status.
+          description: VOB is not in IN_PROGRESS status, or the submitted version is stale.
           content:
             application/json:
               schema:
@@ -497,6 +523,7 @@ paths:
             schema:
               $ref: '#/components/schemas/ManualVerificationRequestDTO'
             example:
+              version: 2
               result: VERIFIED
               coverageActive: true
               networkStatus: IN_NETWORK
@@ -532,7 +559,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiError'
         '409':
-          description: VOB is not in IN_PROGRESS status.
+          description: VOB is not in IN_PROGRESS status, or the submitted version is stale.
           content:
             application/json:
               schema:
@@ -1004,8 +1031,14 @@ components:
     ManualVerificationRequestDTO:
       type: object
       required:
+        - version
         - result
       properties:
+        version:
+          type: integer
+          format: int64
+          description: Current VOB version from the latest VOB response. Used for optimistic locking.
+          example: 2
         result:
           type: string
           enum:
@@ -1057,6 +1090,7 @@ components:
       type: object
       required:
         - id
+        - version
         - patientId
         - insurance
         - dateOfService
@@ -1069,6 +1103,11 @@ components:
         id:
           type: string
           example: 6682df563cc7f568fbf16220
+        version:
+          type: integer
+          format: int64
+          description: Optimistic locking version. Send this value in update requests to prevent stale edits.
+          example: 2
         patientId:
           type: string
           example: 6682df563cc7f568fbf16210

@@ -14,6 +14,8 @@ public enum AppRole {
             Permission.VOB_VIEW_OWN
     ),
     SPECIALIST(
+            Permission.PATIENT_VIEW,
+            Permission.VOB_CREATE,
             Permission.VOB_QUEUE_VIEW,
             Permission.VOB_CLAIM,
             Permission.VOB_VERIFY_API,

@@ -3,12 +3,14 @@ package com.vobworkbench.feature.vob.entity;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Document(collection = "vob")
 @CompoundIndex(name = "vob_queue_cursor_idx", def = "{'status': 1, 'createdAt': 1, '_id': 1}")
@@ -16,6 +18,12 @@ public class Vob {
 
     @Id
     private String id;
+
+    @Indexed(unique = true, sparse = true)
+    private String publicId = UUID.randomUUID().toString();
+
+    @Version
+    private Long version;
 
     @Indexed
     private String patientId;
@@ -51,6 +59,21 @@ public class Vob {
     public String getId() {
 
         return id;
+    }
+
+    public String getPublicId() {
+
+        return publicId == null ? id : publicId;
+    }
+
+    public void setPublicId(String publicId) {
+
+        this.publicId = publicId;
+    }
+
+    public Long getVersion() {
+
+        return version;
     }
 
     public String getPatientId() {

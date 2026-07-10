@@ -19,9 +19,7 @@ interface NavItem {
     <nav class="sidebar">
       <div class="sidebar__brand">
         <div class="sidebar__brand-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path [attr.d]="iconPath('workbench')"></path>
-          </svg>
+          <img src="/assets/icons/app-icon.png" alt="" aria-hidden="true" />
         </div>
         <div>
           <div class="sidebar__brand-title">VOB Workbench</div>
@@ -130,11 +128,12 @@ interface NavItem {
       flex-shrink: 0;
     }
 
+    .sidebar__brand-icon img,
     .sidebar__brand-icon svg,
     .sidebar__icon svg,
     .sidebar__subicon svg {
-      width: 18px;
-      height: 18px;
+      width: 22px;
+      height: 22px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -142,9 +141,10 @@ interface NavItem {
       stroke-linejoin: round;
     }
 
+    .sidebar__brand-icon img,
     .sidebar__brand-icon svg {
-      width: 16px;
-      height: 16px;
+      width: 22px;
+      height: 22px;
     }
 
     .sidebar__brand-title {
@@ -343,10 +343,10 @@ export class SidebarNavigationComponent {
     {
       label: 'Patients',
       route: '/app/patients/list',
-      roles: ['ADMIN', 'FRONT_DESK_OPERATOR'],
+      roles: ['ADMIN', 'FRONT_DESK_OPERATOR', 'SPECIALIST'],
       icon: 'patients',
       children: [
-        { label: 'List Patients', route: '/app/patients/list', roles: ['ADMIN', 'FRONT_DESK_OPERATOR'], icon: 'list' },
+        { label: 'List Patients', route: '/app/patients/list', roles: ['ADMIN', 'FRONT_DESK_OPERATOR', 'SPECIALIST'], icon: 'list' },
         { label: 'Add Patient', route: '/app/patients/add', roles: ['ADMIN', 'FRONT_DESK_OPERATOR'], icon: 'add' }
       ]
     },
@@ -356,8 +356,8 @@ export class SidebarNavigationComponent {
       roles: ['ADMIN', 'FRONT_DESK_OPERATOR', 'SPECIALIST'],
       icon: 'workbench',
       children: [
-        { label: 'List VOB', route: '/app/vob/list', roles: ['ADMIN', 'FRONT_DESK_OPERATOR', 'SPECIALIST'], icon: 'list' },
-        { label: 'Add VOB', route: '/app/vob/add', roles: ['ADMIN', 'FRONT_DESK_OPERATOR'], icon: 'add' }
+        { label: 'List VOB', route: '/app/vob/list', roles: ['ADMIN', 'SPECIALIST'], icon: 'list' },
+        { label: 'Add VOB', route: '/app/vob/add', roles: ['ADMIN', 'FRONT_DESK_OPERATOR', 'SPECIALIST'], icon: 'add' }
       ]
     },
     { label: 'Admin', route: '/app/admin/users', roles: ['ADMIN'], icon: 'admin' },

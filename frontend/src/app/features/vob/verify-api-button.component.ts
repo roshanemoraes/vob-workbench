@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Vob } from '../../core/models/vob.models';
 import { AppButtonComponent } from '../../shared/ui/app-button.component';
@@ -13,7 +13,7 @@ type VerifyState = 'idle' | 'loading' | 'success' | 'failed' | 'unavailable';
   standalone: true,
   imports: [AppButtonComponent, PermissionGateDirective],
   template: `
-    <ng-container *appHasPermission="'VOB_VERIFY'">
+    <ng-container *appHasPermission="'VOB_VERIFY_API'">
       <app-button
         variant="primary"
         [loading]="state() === 'loading'"
@@ -34,12 +34,12 @@ type VerifyState = 'idle' | 'loading' | 'success' | 'failed' | 'unavailable';
   `
 })
 export class VerifyApiButtonComponent {
-  @Input({ required: true }) vobId!: string;
+  @Input({ required: true }) vob!: Vob;
   @Output() verified = new EventEmitter<Vob>();
   @Output() verificationStarted = new EventEmitter<void>();
   @Output() verificationFailed = new EventEmitter<void>();
 
-  private readonly vobStore = inject(MockVobStore);
+  private readonly vobStore = inject(VobApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
 
@@ -59,7 +59,7 @@ export class VerifyApiButtonComponent {
     if (!userId) return;
     this.state.set('loading');
     this.verificationStarted.emit();
-    this.vobStore.verifyVobWithApi(this.vobId, userId).subscribe({
+    this.vobStore.verifyVobWithApi(this.vob.id, userId, this.vob.version).subscribe({
       next: ({ vob, unavailable }) => {
         if (unavailable) {
           this.state.set('unavailable');
@@ -69,7 +69,9 @@ export class VerifyApiButtonComponent {
         }
         this.state.set('success');
         this.toast.success('VOB verified via API.');
-        this.verified.emit(vob);
+        if (vob) {
+          this.verified.emit(vob);
+        }
       },
       error: () => {
         this.state.set('failed');

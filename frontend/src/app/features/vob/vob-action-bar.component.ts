@@ -1,7 +1,7 @@
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Vob } from '../../core/models/vob.models';
 import { AppButtonComponent } from '../../shared/ui/app-button.component';
@@ -22,12 +22,12 @@ import { VerifyApiButtonComponent } from './verify-api-button.component';
         }
         @case ('IN_PROGRESS') {
           <app-verify-api-button
-            [vobId]="vob.id"
+            [vob]="vob"
             (verificationStarted)="actionStarted.emit()"
             (verificationFailed)="apiVerificationFailed.emit()"
             (verified)="verified.emit($event)"
           />
-          <ng-container *appHasPermission="'VOB_VERIFY'">
+          <ng-container *appHasPermission="'VOB_VERIFY_MANUAL'">
             <app-button variant="secondary" (click)="goManual()">Verify Manually</app-button>
           </ng-container>
         }
@@ -56,7 +56,7 @@ export class VobActionBarComponent {
   @Output() actionStarted = new EventEmitter<void>();
   @Output() apiVerificationFailed = new EventEmitter<void>();
 
-  private readonly vobStore = inject(MockVobStore);
+  private readonly vobStore = inject(VobApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);

@@ -2,8 +2,8 @@ import { Component, HostListener, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
-import { MockVobStore } from '../../core/api/mock-vob.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
+import { VobApiService } from '../../core/api/vob-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Patient } from '../../core/models/patient.models';
 import { Vob, VobStatus } from '../../core/models/vob.models';
@@ -133,7 +133,7 @@ import { VobTableComponent } from './vob-table.component';
           <div>
             <span>Show</span>
             <strong>{{ vobs().length }}</strong>
-            <span>results</span>
+            <span>of {{ totalCount() }} VOBs</span>
             <label class="page-size">
               <span>per page</span>
               <select [value]="10" aria-label="Rows per page">
@@ -174,7 +174,7 @@ import { VobTableComponent } from './vob-table.component';
     .vob-list-toolbar h1 {
       color: #2d3438;
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 400;
     }
 
     .vob-list-controls {
@@ -523,8 +523,8 @@ import { VobTableComponent } from './vob-table.component';
 export class VobListPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly vobStore = inject(MockVobStore);
-  private readonly patientStore = inject(MockPatientStore);
+  private readonly vobStore = inject(VobApiService);
+  private readonly patientStore = inject(PatientApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
 
@@ -533,6 +533,7 @@ export class VobListPageComponent implements OnInit {
   readonly patientLookup = signal<Record<string, Patient>>({});
   readonly selectedVobIds = signal<string[]>([]);
   readonly hasMore = signal(false);
+  readonly totalCount = signal(0);
   readonly status = signal<VobStatusFilter>('ALL');
   readonly statusMenuOpen = signal(false);
   selectedStatus: VobStatusFilter = 'ALL';
@@ -670,6 +671,7 @@ export class VobListPageComponent implements OnInit {
       .subscribe((page) => {
         this.vobs.update((list) => (append ? [...list, ...page.items] : page.items));
         this.hasMore.set(page.hasMore);
+        this.totalCount.set(page.totalCount);
         this.cursor = page.nextCursor ?? undefined;
         this.loading.set(false);
         this.loadPatientsFor(page.items);

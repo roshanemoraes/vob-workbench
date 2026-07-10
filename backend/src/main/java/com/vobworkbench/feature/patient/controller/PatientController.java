@@ -39,20 +39,24 @@ public class PatientController {
             @Valid @RequestBody CreatePatientRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(patientService.create(request, principal.getId()));
+                .body(patientService.createPatient(request, principal));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize(SecurityExpressions.PATIENT_VIEW)
-    ResponseEntity<PatientResponse> getPatientById(@PathVariable String id) {
-        return ResponseEntity.ok(patientService.getById(id));
+    ResponseEntity<PatientResponse> getPatientById(
+            @PathVariable String id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(patientService.getById(id, principal));
     }
 
     @GetMapping
     @PreAuthorize(SecurityExpressions.PATIENT_VIEW)
     ResponseEntity<PatientPageResponse> getPatients(
             @RequestParam(required = false) String cursor,
-            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit) {
-        return ResponseEntity.ok(patientService.list(cursor, limit));
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int limit,
+            @RequestParam(required = false) String search,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(patientService.searchPatients(cursor, limit, search, principal));
     }
 }

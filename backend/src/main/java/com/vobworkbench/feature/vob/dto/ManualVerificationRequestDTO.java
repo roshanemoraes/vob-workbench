@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 public record ManualVerificationRequestDTO(
 
+        @NotNull Long version,
         @NotNull VobStatus result,
         Boolean coverageActive,
         NetworkStatus networkStatus,

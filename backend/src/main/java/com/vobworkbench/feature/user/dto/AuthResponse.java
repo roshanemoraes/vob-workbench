@@ -9,9 +9,7 @@ import java.util.Set;
 public record AuthResponse(
         String tokenType,
         String accessToken,
-        String refreshToken,
         Instant expiresAt,
-        Instant refreshExpiresAt,
         UserSummary user
 ) {
     public record UserSummary(

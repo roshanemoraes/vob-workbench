@@ -34,7 +34,7 @@ public class MockEligibilityVerificationService {
                     null,
                     null,
                     "Mock eligibility API could not verify active coverage.",
-                    "MOCK-FAILED-" + vob.getId(),
+                    "MOCK-FAILED-" + vob.getPublicId(),
                     "Coverage could not be verified by API"
             );
         }
@@ -50,7 +50,7 @@ public class MockEligibilityVerificationService {
                 BigDecimal.valueOf(6000),
                 BigDecimal.valueOf(1250),
                 "Coverage confirmed by mock eligibility API.",
-                "MOCK-VERIFIED-" + vob.getId(),
+                "MOCK-VERIFIED-" + vob.getPublicId(),
                 null
         );
     }

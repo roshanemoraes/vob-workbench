@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
 import { Patient } from '../../core/models/patient.models';
 import { LoadingStateComponent } from '../../shared/ui/loading-state.component';
 import { PatientSearchBarComponent, PatientSearchCriteria } from './patient-search-bar.component';
@@ -34,9 +34,9 @@ import { PatientTableComponent } from './patient-table.component';
         @if (patients().length > 0) {
           <footer class="patient-list-footer">
             <div class="show-count">
-              <span>Showing</span>
+              <span>Show</span>
               <strong>{{ patients().length }}</strong>
-              <span>items</span>
+              <span>of {{ totalCount() }} patients</span>
             </div>
             <button type="button" class="load-more" [disabled]="!hasMore()" (click)="loadMore()">
               Load more
@@ -71,7 +71,7 @@ import { PatientTableComponent } from './patient-table.component';
       margin: 0;
       color: #1a1a18;
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 400;
     }
 
     .new-patient-button {
@@ -151,12 +151,13 @@ import { PatientTableComponent } from './patient-table.component';
   `
 })
 export class PatientListPageComponent implements OnInit {
-  private readonly patientStore = inject(MockPatientStore);
+  private readonly patientStore = inject(PatientApiService);
   private readonly router = inject(Router);
 
   readonly loading = signal(true);
   readonly patients = signal<Patient[]>([]);
   readonly hasMore = signal(false);
+  readonly totalCount = signal(0);
   private searchCriteria: PatientSearchCriteria = { field: 'all', term: '' };
   private cursor: string | undefined;
 
@@ -188,6 +189,7 @@ export class PatientListPageComponent implements OnInit {
     }).subscribe((page) => {
       this.patients.update((list) => (append ? [...list, ...page.items] : page.items));
       this.hasMore.set(page.hasMore);
+      this.totalCount.set(page.totalCount);
       this.cursor = page.nextCursor ?? undefined;
       this.loading.set(false);
     });

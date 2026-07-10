@@ -1,8 +1,8 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MockCurrentUserStore } from '../../core/auth/mock-current-user.store';
-import { MockPatientStore } from '../../core/api/mock-patient.store';
+import { PatientApiService } from '../../core/api/patient-api.service';
 import { ToastService } from '../../core/api/toast.service';
 import { Gender } from '../../core/models/patient.models';
 import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.component';
@@ -18,7 +18,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     <section class="patient-create-page">
       <header class="page-header">
         <h1>Patient Intake Details</h1>
-        <p>Provide essential patient demographics for benefit verification intake</p>
+        <p>Provide essential patient demographics for benefit verification intake.</p>
       </header>
 
       <form [formGroup]="form" (ngSubmit)="submit()" class="patient-create-panel">
@@ -36,24 +36,58 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
           <div class="form-grid form-grid--2 form-grid--identity">
             <label class="field">
               <span>MRN</span>
-              <input type="text" formControlName="mrn" placeholder="e.g. MRN-10004" />
+              <input
+                type="text"
+                formControlName="mrn"
+                placeholder="e.g. MRN-10004"
+                maxlength="30"
+                [class.input-invalid]="isInvalid('mrn')"
+              />
+              @if (errorFor('mrn')) {
+                <small class="field-error">{{ errorFor('mrn') }}</small>
+              }
             </label>
 
             <label class="field">
               <span>Date of birth</span>
-              <app-date-picker-input formControlName="dateOfBirth" placeholder="Select date of birth" />
+              <app-date-picker-input
+                formControlName="dateOfBirth"
+                placeholder="Select date of birth"
+                [maxDate]="today"
+              />
+              @if (errorFor('dateOfBirth')) {
+                <small class="field-error">{{ errorFor('dateOfBirth') }}</small>
+              }
             </label>
           </div>
 
           <div class="form-grid form-grid--2 form-grid--name">
             <label class="field">
               <span>First name</span>
-              <input type="text" formControlName="firstName" placeholder="e.g. Maria" />
+              <input
+                type="text"
+                formControlName="firstName"
+                placeholder="e.g. Maria"
+                maxlength="60"
+                [class.input-invalid]="isInvalid('firstName')"
+              />
+              @if (errorFor('firstName')) {
+                <small class="field-error">{{ errorFor('firstName') }}</small>
+              }
             </label>
 
             <label class="field">
               <span>Last name</span>
-              <input type="text" formControlName="lastName" placeholder="e.g. Garcia" />
+              <input
+                type="text"
+                formControlName="lastName"
+                placeholder="e.g. Garcia"
+                maxlength="60"
+                [class.input-invalid]="isInvalid('lastName')"
+              />
+              @if (errorFor('lastName')) {
+                <small class="field-error">{{ errorFor('lastName') }}</small>
+              }
             </label>
           </div>
         </section>
@@ -77,6 +111,9 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
                   <option [value]="option.value">{{ option.label }}</option>
                 }
               </select>
+              @if (errorFor('gender')) {
+                <small class="field-error">{{ errorFor('gender') }}</small>
+              }
             </label>
 
             <label class="field">
@@ -95,8 +132,13 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
                   type="tel"
                   formControlName="phone"
                   placeholder="555 0104"
+                  inputmode="tel"
+                  maxlength="20"
                 />
               </div>
+              @if (errorFor('phone')) {
+                <small class="field-error">{{ errorFor('phone') }}</small>
+              }
             </label>
           </div>
         </section>
@@ -125,7 +167,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       margin: 0 0 6px;
       color: #1a1a18;
       font-size: 22px;
-      font-weight: 700;
+      font-weight: 400;
       letter-spacing: 0;
     }
 
@@ -133,7 +175,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       margin: 0;
       color: #8a8983;
       font-size: 13.5px;
-      font-weight: 500;
+      font-weight: 400;
     }
 
     .patient-create-panel {
@@ -162,7 +204,7 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       margin: 0;
       color: #1a1a18;
       font-size: 15px;
-      font-weight: 600;
+      font-weight: 400;
     }
 
     .icon-circle {
@@ -241,7 +283,12 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       color: #1a1a18;
       font: inherit;
       font-size: 13.5px;
-      font-weight: 500;
+      font-weight: 400;
+    }
+
+    .field select {
+      padding-right: 36px;
+      background-position: right 12px center;
     }
 
     .field input::placeholder {
@@ -252,6 +299,18 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
     .field select:focus {
       outline: 2px solid #e4f5f0;
       border-color: #0f8a72;
+    }
+
+    .field input.input-invalid,
+    .field select.input-invalid,
+    .field:has(.field-error) .phone-control {
+      border-color: #d93025;
+    }
+
+    .field-error {
+      color: #b42318;
+      font-size: 11.5px;
+      font-weight: 400;
     }
 
     .phone-control {
@@ -287,8 +346,8 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       box-shadow: 0 0 0 1px rgba(39, 50, 56, 0.08);
     }
 
-    .phone-control__code,
-    .phone-control__number {
+    .field .phone-control__code,
+    .field .phone-control__number {
       min-height: 40px;
       border: 0;
       border-radius: 0;
@@ -296,12 +355,13 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
       box-shadow: none;
     }
 
-    .phone-control__code {
-      padding: 0 8px;
+    .field .phone-control__code {
+      padding: 0 28px 0 8px;
+      background-position: right 8px center;
       cursor: pointer;
     }
 
-    .phone-control__number {
+    .field .phone-control__number {
       padding-left: 12px;
     }
 
@@ -388,12 +448,13 @@ import { DatePickerInputComponent } from '../../shared/forms/date-picker-input.c
 })
 export class PatientCreatePageComponent {
   private readonly fb = inject(FormBuilder);
-  private readonly patientStore = inject(MockPatientStore);
+  private readonly patientStore = inject(PatientApiService);
   private readonly userStore = inject(MockCurrentUserStore);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   readonly saving = signal(false);
+  readonly today = new Date().toISOString().slice(0, 10);
   readonly genderOptions = [
     { value: 'MALE', label: 'Male' },
     { value: 'FEMALE', label: 'Female' },
@@ -410,13 +471,27 @@ export class PatientCreatePageComponent {
   ];
 
   readonly form = this.fb.nonNullable.group({
-    mrn: ['', Validators.required],
-    firstName: ['', Validators.required],
-    lastName: ['', Validators.required],
-    dateOfBirth: ['', Validators.required],
+    mrn: ['', [
+      Validators.required,
+      Validators.pattern(/^[A-Za-z0-9-]{3,30}$/)
+    ]],
+    firstName: ['', [
+      Validators.required,
+      Validators.maxLength(60),
+      Validators.pattern(/^[A-Za-z][A-Za-z .'-]*$/)
+    ]],
+    lastName: ['', [
+      Validators.required,
+      Validators.maxLength(60),
+      Validators.pattern(/^[A-Za-z][A-Za-z .'-]*$/)
+    ]],
+    dateOfBirth: ['', [Validators.required, isoDateValidator(), dateBeforeTodayValidator()]],
     gender: ['' as Gender | '', Validators.required],
     phoneCountryCode: ['+1', Validators.required],
-    phone: ['', Validators.required]
+    phone: ['', [
+      Validators.required,
+      Validators.pattern(/^[0-9 ()-]{7,20}$/)
+    ]]
   });
 
   cancel(): void {
@@ -430,11 +505,14 @@ export class PatientCreatePageComponent {
   }
 
   submit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.saving.set(true);
     const userId = this.userStore.currentUser()?.id ?? 'unknown';
     const { phoneCountryCode, ...patient } = this.form.getRawValue();
-    const request: Parameters<MockPatientStore['create']>[0] = {
+    const request: Parameters<PatientApiService['create']>[0] = {
       ...patient,
       gender: patient.gender as Gender,
       phone: `${phoneCountryCode} ${patient.phone}`.trim()
@@ -448,4 +526,56 @@ export class PatientCreatePageComponent {
       complete: () => this.saving.set(false)
     });
   }
+
+  isInvalid(controlName: keyof typeof this.form.controls): boolean {
+    const control = this.form.controls[controlName];
+    return control.invalid && (control.touched || control.dirty);
+  }
+
+  errorFor(controlName: keyof typeof this.form.controls): string | null {
+    const control = this.form.controls[controlName];
+    if (!control || !this.isInvalid(controlName)) {
+      return null;
+    }
+    if (control.hasError('required')) return 'Required';
+    if (control.hasError('pattern')) return this.patternMessage(controlName);
+    if (control.hasError('invalidDate')) return 'Use YYYY-MM-DD';
+    if (control.hasError('notPastDate')) return 'Must be before today';
+    return 'Invalid value';
+  }
+
+  private patternMessage(controlName: keyof typeof this.form.controls): string {
+    if (controlName === 'mrn') return 'Use 3-30 letters, numbers, or hyphens';
+    if (controlName === 'phone') return 'Use a valid phone number';
+    return 'Use letters, spaces, apostrophes, periods, or hyphens';
+  }
+}
+
+function isoDateValidator(): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const value = control.value;
+    if (!value) return null;
+    return isValidIsoDate(value) ? null : { invalidDate: true };
+  };
+}
+
+function dateBeforeTodayValidator(): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const value = control.value;
+    if (!value || isoDateValidator()(control)) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    return value < today ? null : { notPastDate: true };
+  };
+}
+
+function isValidIsoDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day;
 }

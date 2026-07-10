@@ -4,6 +4,15 @@ import { RouterLink } from '@angular/router';
 import { Patient } from '../../core/models/patient.models';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 
+export type PatientTableColumn =
+  | 'mrn'
+  | 'name'
+  | 'dateOfBirth'
+  | 'gender'
+  | 'phone'
+  | 'createdAt'
+  | 'actions';
+
 @Component({
   selector: 'app-patient-table',
   standalone: true,
@@ -19,6 +28,15 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
     } @else {
       <div class="table-wrap">
         <table class="patient-table">
+          <colgroup>
+            <col [style.width.%]="widthFor('mrn')" />
+            <col [style.width.%]="widthFor('name')" />
+            <col [style.width.%]="widthFor('dateOfBirth')" />
+            <col [style.width.%]="widthFor('gender')" />
+            <col [style.width.%]="widthFor('phone')" />
+            <col [style.width.%]="widthFor('createdAt')" />
+            <col [style.width.%]="widthFor('actions')" />
+          </colgroup>
           <thead>
             <tr>
               <th>MRN</th>
@@ -36,7 +54,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
                 <td class="mrn">{{ patient.mrn }}</td>
                 <td class="patient-name">{{ patient.lastName }}, {{ patient.firstName }}</td>
                 <td>{{ patient.dateOfBirth | date: 'mediumDate' }}</td>
-                <td><span class="gender-badge">{{ formatGender(patient.gender) }}</span></td>
+                <td class="enum-cell"><span class="gender-badge">{{ formatGender(patient.gender) }}</span></td>
                 <td>{{ patient.phone }}</td>
                 <td>{{ patient.createdAt | date: 'short' }}</td>
                 <td (click)="$event.stopPropagation()">
@@ -65,6 +83,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
       width: 100%;
       min-width: 980px;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     .patient-table th {
@@ -75,7 +94,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.03em;
-      text-align: left;
+      text-align: center;
       text-transform: uppercase;
     }
 
@@ -84,6 +103,7 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
       border-bottom: 1px solid rgba(0, 0, 0, 0.09);
       color: #1a1a18;
       font-size: 13.5px;
+      text-align: center;
       vertical-align: middle;
     }
 
@@ -100,19 +120,26 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
     }
 
     .mrn {
+      overflow-wrap: anywhere;
       color: #0f8a72;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
       font-size: 12.5px;
-      font-weight: 700;
+      font-weight: 400;
     }
 
     .patient-name {
       color: #1a1a18;
-      font-weight: 700;
+      font-weight: 400;
+    }
+
+    .enum-cell {
+      text-align: center;
     }
 
     .gender-badge {
-      display: inline-block;
+      display: inline-flex;
+      justify-content: center;
+      min-width: 76px;
       padding: 3px 9px;
       border: 1px solid rgba(0, 0, 0, 0.09);
       border-radius: 6px;
@@ -139,8 +166,23 @@ import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
   `
 })
 export class PatientTableComponent {
+  private readonly defaultColumnWidths: Record<PatientTableColumn, number> = {
+    mrn: 14,
+    name: 20,
+    dateOfBirth: 14,
+    gender: 10,
+    phone: 17,
+    createdAt: 13,
+    actions: 12
+  };
+
   @Input({ required: true }) patients!: Patient[];
+  @Input() columnWidths: Partial<Record<PatientTableColumn, number>> = {};
   @Output() createPatient = new EventEmitter<void>();
+
+  widthFor(column: PatientTableColumn): number {
+    return this.columnWidths[column] ?? this.defaultColumnWidths[column];
+  }
 
   formatGender(gender: Patient['gender']): string {
     const labels: Record<Patient['gender'], string> = {
