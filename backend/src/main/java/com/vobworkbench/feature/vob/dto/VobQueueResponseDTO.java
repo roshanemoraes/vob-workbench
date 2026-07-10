@@ -6,5 +6,6 @@ public record VobQueueResponseDTO(
 
         List<VobResponseDTO> items,
         String nextCursor,
-        boolean hasNext) {
+        boolean hasNext,
+        long totalCount) {
 }

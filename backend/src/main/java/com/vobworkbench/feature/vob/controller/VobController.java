@@ -47,7 +47,7 @@ public class VobController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(vobService.createVob(request, principal.getId()));
+                .body(vobService.createVob(request, principal));
     }
 
     @GetMapping("/{id}")
