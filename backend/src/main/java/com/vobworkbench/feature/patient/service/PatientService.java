@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.vobworkbench.core.exception.ConflictException;
+import com.vobworkbench.core.exception.ErrorCode;
 import com.vobworkbench.core.exception.ResourceNotFoundException;
 import com.vobworkbench.feature.audit.entity.AuditAction;
 import com.vobworkbench.feature.audit.entity.AuditEntityType;
@@ -48,7 +49,7 @@ public class PatientService {
     public PatientResponse createPatient(CreatePatientRequest request, UserPrincipal principal) {
 
         if (patientRepository.existsByMrn(request.mrn())) {
-            throw new ConflictException("Patient MRN already exists");
+            throw new ConflictException(ErrorCode.PATIENT_MRN_ALREADY_EXISTS);
         }
 
         Patient patient = new Patient();
@@ -160,7 +161,7 @@ public class PatientService {
 
         return patientRepository.findByPublicId(id)
                 .or(() -> ObjectId.isValid(id) ? patientRepository.findById(id) : java.util.Optional.empty())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PATIENT_NOT_FOUND));
     }
 
     private void applyCriteria(Query query, List<Criteria> criteria) {

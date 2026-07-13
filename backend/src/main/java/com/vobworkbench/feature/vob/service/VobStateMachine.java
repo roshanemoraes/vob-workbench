@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.vobworkbench.core.exception.ConflictException;
+import com.vobworkbench.core.exception.ErrorCode;
 import com.vobworkbench.feature.vob.entity.VobAction;
 import com.vobworkbench.feature.vob.entity.VobStatus;
 
@@ -21,7 +22,10 @@ public class VobStateMachine {
                 .get(action);
 
         if (nextStatus == null) {
-            throw new ConflictException("Cannot perform " + action + " when VOB is " + currentStatus);
+            throw new ConflictException(
+                    ErrorCode.INVALID_VOB_STATUS_TRANSITION,
+                    "Cannot perform " + action + " when VOB is " + currentStatus
+            );
         }
 
         return nextStatus;

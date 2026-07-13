@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 import org.springframework.stereotype.Service;
 
+import com.vobworkbench.core.exception.ErrorCode;
 import com.vobworkbench.core.exception.ServiceUnavailableException;
 import com.vobworkbench.feature.vob.dto.ApiEligibilityVerificationResult;
 import com.vobworkbench.feature.vob.entity.InsurancePolicy;
@@ -19,7 +20,7 @@ public class MockEligibilityVerificationService {
         String memberId = insurancePolicy.getMemberId();
 
         if (containsIgnoreCase(memberId, "UNAVAILABLE")) {
-            throw new ServiceUnavailableException("Eligibility verification API is unavailable");
+            throw new ServiceUnavailableException(ErrorCode.ELIGIBILITY_SERVICE_UNAVAILABLE);
         }
 
         if (containsIgnoreCase(memberId, "FAIL")) {

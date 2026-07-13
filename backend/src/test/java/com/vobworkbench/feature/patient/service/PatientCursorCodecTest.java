@@ -1,5 +1,6 @@
 package com.vobworkbench.feature.patient.service;
 
+import com.vobworkbench.core.exception.VobWorkbenchClientException;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -25,7 +26,7 @@ class PatientCursorCodecTest {
     @Test
     void rejectsMalformedCursor() {
         assertThatThrownBy(() -> codec.decode("not-a-valid-cursor"))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(VobWorkbenchClientException.class)
                 .hasMessage("Invalid patient cursor");
     }
 
@@ -34,7 +35,7 @@ class PatientCursorCodecTest {
         String cursor = codec.encode(Instant.parse("2026-07-13T03:45:00Z"), "not-an-object-id");
 
         assertThatThrownBy(() -> codec.decode(cursor))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(VobWorkbenchClientException.class)
                 .hasMessage("Invalid patient cursor");
     }
 }

@@ -19,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.vobworkbench.core.exception.ConflictException;
+import com.vobworkbench.core.exception.ErrorCode;
 import com.vobworkbench.core.exception.ResourceNotFoundException;
+import com.vobworkbench.core.exception.VobWorkbenchClientException;
 import com.vobworkbench.feature.audit.entity.AuditAction;
 import com.vobworkbench.feature.audit.entity.AuditEntityType;
 import com.vobworkbench.feature.audit.service.AuditService;
@@ -233,7 +235,7 @@ public class VobService {
                 "VOB is not in QUEUED status and cannot be claimed",
                 Map.of("attemptedAction", VobAction.START_PROCESSING.name())
         );
-        throw new ConflictException("VOB is not in QUEUED status and cannot be claimed");
+        throw new ConflictException(ErrorCode.VOB_NOT_CLAIMABLE);
     }
 
     public VobResponseDTO verifyVobWithApi(String vobId, String ifMatch, UserPrincipal principal) {
@@ -303,7 +305,7 @@ public class VobService {
 
         if (vobRepository.findByPublicId(id).isEmpty()
                 && (!ObjectId.isValid(id) || !vobRepository.existsById(id))) {
-            throw new ResourceNotFoundException("VOB not found");
+            throw new ResourceNotFoundException(ErrorCode.VOB_NOT_FOUND);
         }
     }
 
@@ -311,14 +313,14 @@ public class VobService {
 
         return vobRepository.findByPublicId(id)
                 .or(() -> ObjectId.isValid(id) ? vobRepository.findById(id) : java.util.Optional.empty())
-                .orElseThrow(() -> new ResourceNotFoundException("VOB not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOB_NOT_FOUND));
     }
 
     private Patient findPatientByPublicIdOrDocumentId(String id) {
 
         return patientRepository.findByPublicId(id)
                 .or(() -> ObjectId.isValid(id) ? patientRepository.findById(id) : java.util.Optional.empty())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PATIENT_NOT_FOUND));
     }
 
     private void ensureAssignedToCurrentUserOrAdmin(Vob vob, UserPrincipal principal, AuditAction action) {
@@ -353,7 +355,7 @@ public class VobService {
                     "Version conflict",
                     metadata
             );
-            throw new ConflictException("This VOB was updated by another user. Refresh and try again.");
+            throw new ConflictException(ErrorCode.VOB_VERSION_CONFLICT);
         }
     }
 
@@ -425,7 +427,7 @@ public class VobService {
     private Long parseExpectedVersion(String ifMatch) {
 
         if (!StringUtils.hasText(ifMatch)) {
-            throw new IllegalArgumentException("If-Match header is required");
+            throw new VobWorkbenchClientException(ErrorCode.IF_MATCH_REQUIRED);
         }
 
         String normalized = ifMatch.trim();
@@ -436,7 +438,7 @@ public class VobService {
         try {
             return Long.parseLong(normalized);
         } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("If-Match header must contain the current VOB version");
+            throw new VobWorkbenchClientException(ErrorCode.INVALID_IF_MATCH_HEADER);
         }
     }
 
@@ -455,7 +457,7 @@ public class VobService {
             return VobAction.MANUAL_VERIFY_FAILED;
         }
 
-        throw new IllegalArgumentException("Manual verification result must be VERIFIED or FAILED_TO_VERIFY");
+        throw new VobWorkbenchClientException(ErrorCode.INVALID_MANUAL_VERIFICATION_RESULT);
     }
 
     private String encodeCursor(Vob vob) {
