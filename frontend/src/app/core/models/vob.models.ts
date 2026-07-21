@@ -39,6 +39,7 @@ export interface EligibilityResult {
 
 export interface Vob {
   id: string;
+  publicId: string;
   version: number;
   patientId: string;
   insurance: InsurancePolicy;

@@ -46,8 +46,8 @@ export type RelatedVobTableColumn =
           </thead>
           <tbody>
             @for (vob of vobs; track vob.id) {
-              <tr class="clickable-row" [routerLink]="['/app/vob', vob.id]">
-                <td>{{ vob.id }}</td>
+              <tr class="clickable-row" [routerLink]="['/app/vob', vob.publicId]">
+                <td>{{ vob.publicId }}</td>
                 <td>{{ vob.insurance.payerName }}</td>
                 <td>{{ vob.dateOfService | date: 'mediumDate' }}</td>
                 <td class="enum-cell"><span class="priority-badge">{{ vob.priority }}</span></td>

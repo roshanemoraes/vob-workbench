@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import com.vobworkbench.core.exception.ConflictException;
+import com.vobworkbench.core.exception.ErrorCode;
 import com.vobworkbench.core.exception.ResourceNotFoundException;
 import com.vobworkbench.feature.audit.entity.AuditAction;
 import com.vobworkbench.feature.audit.entity.AuditEntityType;
@@ -23,6 +24,7 @@ import com.vobworkbench.feature.patient.dto.PatientPageResponse;
 import com.vobworkbench.feature.patient.dto.PatientResponse;
 import com.vobworkbench.feature.patient.entity.Patient;
 import com.vobworkbench.feature.patient.repository.PatientRepository;
+import com.vobworkbench.feature.user.repository.UserRepository;
 import com.vobworkbench.feature.user.service.UserPrincipal;
 
 @Service
@@ -31,24 +33,27 @@ public class PatientService {
     private final MongoTemplate mongoTemplate;
     private final PatientCursorCodec patientCursorCodec;
     private final PatientRepository patientRepository;
+    private final UserRepository userRepository;
     private final AuditService auditService;
 
     public PatientService(
             MongoTemplate mongoTemplate,
             PatientCursorCodec patientCursorCodec,
             PatientRepository patientRepository,
+            UserRepository userRepository,
             AuditService auditService
     ) {
         this.mongoTemplate = mongoTemplate;
         this.patientCursorCodec = patientCursorCodec;
         this.patientRepository = patientRepository;
+        this.userRepository = userRepository;
         this.auditService = auditService;
     }
 
     public PatientResponse createPatient(CreatePatientRequest request, UserPrincipal principal) {
 
         if (patientRepository.existsByMrn(request.mrn())) {
-            throw new ConflictException("Patient MRN already exists");
+            throw new ConflictException(ErrorCode.PATIENT_MRN_ALREADY_EXISTS);
         }
 
         Patient patient = new Patient();
@@ -68,7 +73,7 @@ public class PatientService {
                 saved.getPublicId(),
                 Map.of("createdByUserId", principal.getId())
         );
-        return PatientResponse.from(saved);
+        return responseFrom(saved);
     }
 
     public PatientResponse getById(String id, UserPrincipal principal) {
@@ -81,7 +86,7 @@ public class PatientService {
                 patient.getPublicId(),
                 Map.of()
         );
-        return PatientResponse.from(patient);
+        return responseFrom(patient);
     }
 
     public PatientPageResponse searchPatients(String cursor, int limit, String search, UserPrincipal principal) {
@@ -131,7 +136,7 @@ public class PatientService {
         String nextCursor = hasNext ? cursorFor(pageItems.get(pageItems.size() - 1)) : null;
 
         PatientPageResponse response = new PatientPageResponse(
-                pageItems.stream().map(PatientResponse::from).toList(),
+                pageItems.stream().map(this::responseFrom).toList(),
                 nextCursor,
                 hasNext,
                 totalCount
@@ -160,7 +165,21 @@ public class PatientService {
 
         return patientRepository.findByPublicId(id)
                 .or(() -> ObjectId.isValid(id) ? patientRepository.findById(id) : java.util.Optional.empty())
-                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PATIENT_NOT_FOUND));
+    }
+
+    private PatientResponse responseFrom(Patient patient) {
+        return PatientResponse.from(patient, publicUserId(patient.getCreatedByUserId()));
+    }
+
+    private String publicUserId(String id) {
+        if (!StringUtils.hasText(id)) {
+            return id;
+        }
+        return userRepository.findByPublicId(id)
+                .or(() -> ObjectId.isValid(id) ? userRepository.findById(id) : java.util.Optional.empty())
+                .map(user -> user.getPublicId())
+                .orElse(id);
     }
 
     private void applyCriteria(Query query, List<Criteria> criteria) {

@@ -71,21 +71,21 @@ export type VobTableColumn =
           @for (vob of vobs; track vob.id) {
             <tr
               class="data-row"
-              [class.is-selected]="isSelected(vob.id)"
-              (click)="view.emit(vob.id)"
+              [class.is-selected]="isSelected(vob.publicId)"
+              (click)="view.emit(vob.publicId)"
             >
               <td class="check-col" (click)="$event.stopPropagation()">
                 @if (selectable) {
                   <input
                     type="checkbox"
                     class="select-box"
-                    [attr.aria-label]="'Select ' + vob.id"
-                    [checked]="isSelected(vob.id)"
-                    (change)="toggleSelection(vob.id, $any($event.target).checked)"
+                    [attr.aria-label]="'Select ' + vob.publicId"
+                    [checked]="isSelected(vob.publicId)"
+                    (change)="toggleSelection(vob.publicId, $any($event.target).checked)"
                   />
                 }
               </td>
-              <td class="vob-id">{{ vob.id }}</td>
+              <td class="vob-id">{{ vob.publicId }}</td>
               <td class="patient-col">
                 @if (patientLookup[vob.patientId]; as patient) {
                   <a [routerLink]="['/app/patients', vob.patientId]" (click)="$event.stopPropagation()">
@@ -127,7 +127,7 @@ export type VobTableColumn =
                 <td class="actions" (click)="$event.stopPropagation()">
                   @if (allowClaim && vob.status === 'QUEUED') {
                     <ng-container *appHasPermission="'VOB_CLAIM'">
-                      <button type="button" class="action-primary" (click)="claim.emit(vob.id)">Claim</button>
+                      <button type="button" class="action-primary" (click)="claim.emit(vob.publicId)">Claim</button>
                     </ng-container>
                   } @else {
                     <span class="no-action">-</span>
@@ -378,7 +378,7 @@ export class VobTableComponent {
   }
 
   allSelected(): boolean {
-    return this.vobs.length > 0 && this.vobs.every((vob) => this.selectedIds.includes(vob.id));
+    return this.vobs.length > 0 && this.vobs.every((vob) => this.selectedIds.includes(vob.publicId));
   }
 
   someSelected(): boolean {
@@ -393,6 +393,6 @@ export class VobTableComponent {
   }
 
   toggleAll(selected: boolean): void {
-    this.selectionChange.emit(selected ? this.vobs.map((vob) => vob.id) : []);
+    this.selectionChange.emit(selected ? this.vobs.map((vob) => vob.publicId) : []);
   }
 }

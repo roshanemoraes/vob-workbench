@@ -2,6 +2,7 @@ export type Gender = 'MALE' | 'FEMALE' | 'OTHER' | 'UNKNOWN';
 
 export interface Patient {
   id: string;
+  publicId: string;
   mrn: string;
   firstName: string;
   lastName: string;
@@ -9,6 +10,7 @@ export interface Patient {
   gender: Gender;
   phone: string;
   createdByUserId: string;
+  createdByUserPublicId: string;
   createdAt: string;
   updatedAt: string;
 }

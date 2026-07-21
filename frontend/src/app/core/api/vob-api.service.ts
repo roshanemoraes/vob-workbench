@@ -13,11 +13,15 @@ const API_BASE_URL = 'http://localhost:8080/api';
 const PAGE_SIZE = 10;
 
 interface VobPageResponse {
-  items: Vob[];
+  items: VobApiResponse[];
   nextCursor: string | null;
   hasNext: boolean;
   totalCount: number;
 }
+
+type VobApiResponse = Omit<Vob, 'publicId'> & {
+  publicId?: string | null;
+};
 
 type VobListQuery = ListQuery & {
   status?: VobStatus | 'ALL';
@@ -51,7 +55,7 @@ export class VobApiService {
 
     return this.http.get<VobPageResponse>(`${API_BASE_URL}/vob`, { params }).pipe(
       map((page) => ({
-        items: page.items,
+        items: page.items.map((vob) => this.toVob(vob)),
         nextCursor: page.nextCursor,
         hasMore: page.hasNext,
         totalCount: page.totalCount
@@ -70,7 +74,8 @@ export class VobApiService {
   }
 
   getById(id: string): Observable<Vob | null> {
-    return this.http.get<Vob>(`${API_BASE_URL}/vob/${id}`).pipe(
+    return this.http.get<VobApiResponse>(`${API_BASE_URL}/vob/${id}`).pipe(
+      map((vob) => this.toVob(vob)),
       catchError((error) => {
         if (error?.status === 404) {
           return of(null);
@@ -94,11 +99,15 @@ export class VobApiService {
   }
 
   create(request: CreateVobRequest, _createdByUserId: string): Observable<Vob> {
-    return this.http.post<Vob>(`${API_BASE_URL}/vob`, request);
+    return this.http.post<VobApiResponse>(`${API_BASE_URL}/vob`, request).pipe(
+      map((vob) => this.toVob(vob))
+    );
   }
 
   claimVob(id: string, _userId: string): Observable<Vob> {
-    return this.http.post<Vob>(`${API_BASE_URL}/vob/${id}/claim`, {});
+    return this.http.post<VobApiResponse>(`${API_BASE_URL}/vob/${id}/claim`, {}).pipe(
+      map((vob) => this.toVob(vob))
+    );
   }
 
   verifyVobWithApi(
@@ -106,10 +115,10 @@ export class VobApiService {
     _userId: string,
     version: number
   ): Observable<{ vob: Vob | null; unavailable?: boolean }> {
-    return this.http.post<Vob>(`${API_BASE_URL}/vob/${id}/verify-api`, {}, {
+    return this.http.post<VobApiResponse>(`${API_BASE_URL}/vob/${id}/verify-api`, {}, {
       headers: new HttpHeaders({ 'If-Match': String(version) })
     }).pipe(
-      map((updated) => ({ vob: updated })),
+      map((updated) => ({ vob: this.toVob(updated) })),
       catchError((error) => {
         if (error?.status === 503) {
           return of({ vob: null, unavailable: true });
@@ -124,6 +133,15 @@ export class VobApiService {
     request: ManualVerificationRequest,
     _userId: string
   ): Observable<Vob> {
-    return this.http.post<Vob>(`${API_BASE_URL}/vob/${id}/verify-manual`, request);
+    return this.http.post<VobApiResponse>(`${API_BASE_URL}/vob/${id}/verify-manual`, request).pipe(
+      map((vob) => this.toVob(vob))
+    );
+  }
+
+  private toVob(vob: VobApiResponse): Vob {
+    return {
+      ...vob,
+      publicId: vob.publicId ?? vob.id
+    };
   }
 }

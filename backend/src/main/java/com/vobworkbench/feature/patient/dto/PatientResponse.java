@@ -16,10 +16,15 @@ public record PatientResponse(
         Gender gender,
         String phone,
         String createdByUserId,
+        String createdByUserPublicId,
         Instant createdAt,
         Instant updatedAt
 ) {
     public static PatientResponse from(Patient patient) {
+        return from(patient, patient.getCreatedByUserId());
+    }
+
+    public static PatientResponse from(Patient patient, String createdByUserPublicId) {
 
         return new PatientResponse(
                 patient.getPublicId(),
@@ -30,6 +35,7 @@ public record PatientResponse(
                 patient.getGender(),
                 patient.getPhone(),
                 patient.getCreatedByUserId(),
+                createdByUserPublicId,
                 patient.getCreatedAt(),
                 patient.getUpdatedAt()
         );

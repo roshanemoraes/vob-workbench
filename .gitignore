@@ -1,0 +1,30 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Backend
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+docs/api.md
+docs/architecture.md
+docs/requirements.md
+docs/roles.md
+docs/srs-sections.md
+AGENTS.md
+
+
+# Environment
+.env
+.env.*
+!.env.example

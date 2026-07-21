@@ -3,6 +3,9 @@ package com.vobworkbench.feature.patient.service;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
 
+import com.vobworkbench.core.exception.ErrorCode;
+import com.vobworkbench.core.exception.VobWorkbenchClientException;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -26,12 +29,12 @@ public class PatientCursorCodec {
             String[] parts = decoded.split("\\|", 2);
 
             if (parts.length != 2 || !ObjectId.isValid(parts[1])) {
-                throw new IllegalArgumentException("Invalid patient cursor");
+                throw new VobWorkbenchClientException(ErrorCode.INVALID_PATIENT_CURSOR);
             }
 
             return new PatientCursor(Instant.parse(parts[0]), parts[1]);
         } catch (DateTimeParseException | IllegalArgumentException exception) {
-            throw new IllegalArgumentException("Invalid patient cursor", exception);
+            throw new VobWorkbenchClientException(ErrorCode.INVALID_PATIENT_CURSOR, exception);
         }
     }
 }

@@ -627,8 +627,8 @@ export class VobListPageComponent implements OnInit {
 
   claimSelectedQueued(): void {
     const queuedIds = this.vobs()
-      .filter((vob) => this.selectedVobIds().includes(vob.id) && vob.status === 'QUEUED')
-      .map((vob) => vob.id);
+      .filter((vob) => this.selectedVobIds().includes(vob.publicId) && vob.status === 'QUEUED')
+      .map((vob) => vob.publicId);
 
     if (queuedIds.length === 0) {
       this.toast.error('No queued VOBs selected.');
@@ -685,7 +685,7 @@ export class VobListPageComponent implements OnInit {
     for (const patientId of missingPatientIds) {
       this.patientStore.getById(patientId).subscribe((patient) => {
         if (!patient) return;
-        this.patientLookup.update((lookup) => ({ ...lookup, [patient.id]: patient }));
+        this.patientLookup.update((lookup) => ({ ...lookup, [patient.publicId]: patient }));
       });
     }
   }

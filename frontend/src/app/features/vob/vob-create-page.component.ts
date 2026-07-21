@@ -778,7 +778,7 @@ export class VobCreatePageComponent implements OnInit {
 
   selectPatient(patient: Patient, clearResults = true): void {
     this.selectedPatient.set(patient);
-    this.form.patchValue({ patientId: patient.id });
+    this.form.patchValue({ patientId: patient.publicId });
     this.patientSearchTerm = '';
     if (clearResults) {
       this.patientSearchResults.set([]);

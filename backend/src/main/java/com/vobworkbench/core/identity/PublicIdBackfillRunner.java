@@ -60,16 +60,22 @@ public class PublicIdBackfillRunner implements CommandLineRunner {
                 .filter(user -> usersMissingPublicId.contains(user.getId()))
                 .toList());
         List<Patient> patients = patientRepository.findAll();
-        patientRepository.saveAll(patients.stream()
-                .filter(patient -> patientsMissingPublicId.contains(patient.getId()))
-                .toList());
-
         Map<String, String> userIds = users.stream()
                 .filter(user -> user.getId() != null)
                 .collect(Collectors.toMap(AppUser::getId, AppUser::getPublicId));
         Map<String, String> patientIds = patients.stream()
                 .filter(patient -> patient.getId() != null)
                 .collect(Collectors.toMap(Patient::getId, Patient::getPublicId));
+
+        List<Patient> changedPatients = new java.util.ArrayList<>();
+        for (Patient patient : patients) {
+            boolean changed = patientsMissingPublicId.contains(patient.getId());
+            changed |= replacePatientCreatedByUserId(patient, userIds);
+            if (changed) {
+                changedPatients.add(patient);
+            }
+        }
+        patientRepository.saveAll(changedPatients);
 
         List<Vob> vobs = vobRepository.findAll();
         List<Vob> changedVobs = new java.util.ArrayList<>();
@@ -166,6 +172,16 @@ public class PublicIdBackfillRunner implements CommandLineRunner {
         String publicId = publicIdFor(publicIdsByDocumentId, vob.getPatientId());
         if (!Objects.equals(publicId, vob.getPatientId())) {
             vob.setPatientId(publicId);
+            return true;
+        }
+        return false;
+    }
+
+    private boolean replacePatientCreatedByUserId(Patient patient, Map<String, String> publicIdsByDocumentId) {
+
+        String publicId = publicIdFor(publicIdsByDocumentId, patient.getCreatedByUserId());
+        if (patient.getCreatedByUserId() != null && !publicId.equals(patient.getCreatedByUserId())) {
+            patient.setCreatedByUserId(publicId);
             return true;
         }
         return false;
