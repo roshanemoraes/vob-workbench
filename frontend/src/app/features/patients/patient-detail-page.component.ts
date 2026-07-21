@@ -134,11 +134,11 @@ type PatientDetailTab = 'GENERAL' | 'VOB_HISTORY' | 'INFO';
                     </div>
                     <div>
                       <dt>Created By</dt>
-                      <dd class="value value--strong">{{ userDisplayName(patient()!.createdByUserId) }}</dd>
+                      <dd class="value value--strong">{{ userDisplayName(patient()!.createdByUserPublicId) }}</dd>
                     </div>
                     <div>
-                      <dt>User ID</dt>
-                      <dd class="value value--mono">{{ patient()!.createdByUserId }}</dd>
+                      <dt>User Public ID</dt>
+                      <dd class="value value--mono">{{ patient()!.createdByUserPublicId }}</dd>
                     </div>
                   </dl>
                 </section>
@@ -192,7 +192,7 @@ type PatientDetailTab = 'GENERAL' | 'VOB_HISTORY' | 'INFO';
                     <dl class="rows">
                       <div>
                         <dt>VOB ID</dt>
-                        <dd class="value value--mono">{{ latest.id }}</dd>
+                        <dd class="value value--mono">{{ latest.publicId }}</dd>
                       </div>
                       <div>
                         <dt>Payer</dt>
@@ -254,11 +254,11 @@ type PatientDetailTab = 'GENERAL' | 'VOB_HISTORY' | 'INFO';
                   <dl class="rows">
                     <div>
                       <dt>Created By</dt>
-                      <dd class="value value--strong">{{ userDisplayName(patient()!.createdByUserId) }}</dd>
+                      <dd class="value value--strong">{{ userDisplayName(patient()!.createdByUserPublicId) }}</dd>
                     </div>
                     <div>
-                      <dt>User ID</dt>
-                      <dd class="value value--mono">{{ patient()!.createdByUserId }}</dd>
+                      <dt>User Public ID</dt>
+                      <dd class="value value--mono">{{ patient()!.createdByUserPublicId }}</dd>
                     </div>
                     <div>
                       <dt>Created At</dt>
@@ -279,7 +279,7 @@ type PatientDetailTab = 'GENERAL' | 'VOB_HISTORY' | 'INFO';
                   <dl class="rows">
                     <div>
                       <dt>Patient ID</dt>
-                      <dd class="value value--mono">{{ patient()!.id }}</dd>
+                      <dd class="value value--mono">{{ patient()!.publicId }}</dd>
                     </div>
                     <div>
                       <dt>MRN</dt>
@@ -710,8 +710,8 @@ export class PatientDetailPageComponent implements OnInit {
     this.patientStore.getById(id).subscribe((patient) => {
       this.patient.set(patient);
       if (patient) {
-        this.patientLookup.set({ [patient.id]: patient });
-        this.vobStore.listByPatientId(patient.id).subscribe((vobs) => {
+        this.patientLookup.set({ [patient.publicId]: patient });
+        this.vobStore.listByPatientId(patient.publicId).subscribe((vobs) => {
           this.vobs.set(
             vobs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           );
@@ -728,7 +728,7 @@ export class PatientDetailPageComponent implements OnInit {
   }
 
   createVob(): void {
-    const id = this.patient()?.id;
+    const id = this.patient()?.publicId;
     if (id) {
       this.router.navigate(['/app/vob/add'], { queryParams: { patientId: id } });
     }

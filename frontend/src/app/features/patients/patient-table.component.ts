@@ -5,6 +5,7 @@ import { Patient } from '../../core/models/patient.models';
 import { EmptyStateComponent } from '../../shared/ui/empty-state.component';
 
 export type PatientTableColumn =
+  | 'patientId'
   | 'mrn'
   | 'name'
   | 'dateOfBirth'
@@ -29,6 +30,7 @@ export type PatientTableColumn =
       <div class="table-wrap">
         <table class="patient-table">
           <colgroup>
+            <col [style.width.%]="widthFor('patientId')" />
             <col [style.width.%]="widthFor('mrn')" />
             <col [style.width.%]="widthFor('name')" />
             <col [style.width.%]="widthFor('dateOfBirth')" />
@@ -39,6 +41,7 @@ export type PatientTableColumn =
           </colgroup>
           <thead>
             <tr>
+              <th>Patient ID</th>
               <th>MRN</th>
               <th>Name</th>
               <th>Date of birth</th>
@@ -49,8 +52,9 @@ export type PatientTableColumn =
             </tr>
           </thead>
           <tbody>
-            @for (patient of patients; track patient.id) {
-              <tr class="data-row" [routerLink]="['/app/patients', patient.id]">
+            @for (patient of patients; track patient.publicId) {
+              <tr class="data-row" [routerLink]="['/app/patients', patient.publicId]">
+                <td class="patient-id">{{ patient.publicId }}</td>
                 <td class="mrn">{{ patient.mrn }}</td>
                 <td class="patient-name">{{ patient.lastName }}, {{ patient.firstName }}</td>
                 <td>{{ patient.dateOfBirth | date: 'mediumDate' }}</td>
@@ -61,7 +65,7 @@ export type PatientTableColumn =
                   <a
                     class="action-link"
                     [routerLink]="['/app/vob/add']"
-                    [queryParams]="{ patientId: patient.id }"
+                    [queryParams]="{ patientId: patient.publicId }"
                   >
                     Create VOB
                   </a>
@@ -119,12 +123,20 @@ export type PatientTableColumn =
       background: #fafaf9;
     }
 
+    .patient-id,
     .mrn {
       overflow-wrap: anywhere;
-      color: #0f8a72;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
       font-size: 12.5px;
       font-weight: 400;
+    }
+
+    .patient-id {
+      color: #5f5e5a;
+    }
+
+    .mrn {
+      color: #0f8a72;
     }
 
     .patient-name {
@@ -167,11 +179,12 @@ export type PatientTableColumn =
 })
 export class PatientTableComponent {
   private readonly defaultColumnWidths: Record<PatientTableColumn, number> = {
-    mrn: 14,
-    name: 20,
+    patientId: 16,
+    mrn: 12,
+    name: 18,
     dateOfBirth: 14,
     gender: 10,
-    phone: 17,
+    phone: 15,
     createdAt: 13,
     actions: 12
   };

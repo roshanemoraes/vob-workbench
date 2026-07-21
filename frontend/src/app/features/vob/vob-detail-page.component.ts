@@ -126,7 +126,7 @@ type VobDetailTab = 'GENERAL' | 'PATIENT_HISTORY' | 'INFO';
                     <div class="row row--single">
                       <dd>
                         @if (patient()) {
-                          <a class="value value--link value--name" [routerLink]="['/app/patients', patient()!.id]">
+                          <a class="value value--link value--name" [routerLink]="['/app/patients', patient()!.publicId]">
                             {{ patient()!.lastName }}, {{ patient()!.firstName }}
                           </a>
                         } @else {

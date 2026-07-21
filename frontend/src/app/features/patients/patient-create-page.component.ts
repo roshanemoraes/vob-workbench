@@ -520,7 +520,7 @@ export class PatientCreatePageComponent {
     this.patientStore.create(request, userId).subscribe({
       next: (patient) => {
         this.toast.success('Patient created successfully.');
-        this.router.navigate(['/app/patients', patient.id]);
+        this.router.navigate(['/app/patients', patient.publicId]);
       },
       error: () => this.saving.set(false),
       complete: () => this.saving.set(false)
